@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>PDF MATRIX</title>
+<title>PDF Matrix · Selecciona, gira y descarga páginas</title>
 <meta name="description" content="Sube un PDF, elige las páginas que necesitas, gira las que estén al revés y descárgalas en un nuevo PDF. Todo ocurre en tu navegador.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📑</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -272,6 +272,49 @@
   .split .btn:first-child { border-radius: 11px 0 0 11px; }
   .split .caret { border-radius: 0 11px 11px 0; padding: 0 12px; border-left: 1px solid rgba(255,255,255,.4); }
   .empty { padding: 60px 20px; text-align: center; color: var(--muted); }
+  /* ---- v4: modales de unir y nombre ---- */
+  .modal { position: fixed; inset: 0; z-index: 70; display: none; place-items: center; background: rgba(6, 10, 20, .7); backdrop-filter: blur(6px); padding: 16px; }
+  .modal.open { display: grid; }
+  .sheet { width: min(580px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 22px; box-shadow: var(--shadow); }
+  .sheet h3 { margin: 0 0 4px; font-size: 1.2rem; letter-spacing: -.01em; }
+  .sheet .sub { margin: 0 0 14px; color: var(--muted); font-size: .88rem; line-height: 1.45; }
+  .sheet .sub.error { color: var(--danger); font-weight: 600; }
+  .sheet .actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: var(--panel-2); margin-bottom: 14px; }
+  .seg button { border: 0; background: transparent; border-radius: 9px; padding: 10px; cursor: pointer; font-weight: 700; font-size: .88rem; }
+  .seg button.on { background: var(--accent); color: #fff; }
+  .mlist { display: grid; gap: 8px; margin-bottom: 12px; }
+  .mrow { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); cursor: grab; }
+  .mrow.over { box-shadow: 0 0 0 2px var(--accent); }
+  .mnum { width: 28px; height: 28px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 800; font-size: .82rem; flex: none; }
+  .minfo { min-width: 0; flex: 1; }
+  .minfo b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .9rem; }
+  .minfo span { color: var(--muted); font-size: .78rem; }
+  .mrow input { width: 120px; height: 36px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); padding: 0 10px; }
+  .mrow .icon-btn { width: 34px; height: 34px; }
+  .r90 { transform: rotate(90deg); }
+  .sheet input.name { width: 100%; height: 46px; border: 1px solid var(--line); border-radius: 11px; background: var(--panel-2); padding: 0 14px; margin-bottom: 16px; }
+  .menu label.chk { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: .9rem; }
+  .menu label.chk:hover { background: var(--accent-soft); }
+  .menu label.chk input { width: 16px; height: 16px; accent-color: var(--accent); }
+  /* ---- v5: unir en la página y opciones de descarga ---- */
+  .mergeview.sheet { width: min(860px, 100%); max-height: none; overflow: visible; margin: clamp(12px, 4vh, 40px) auto 0; }
+  .mergeview h3 { font-size: 1.6rem; }
+  .mthumb { width: 54px; height: 72px; flex: none; display: grid; place-items: center; overflow: hidden; border-radius: 6px; background: #fff; border: 1px solid var(--line); }
+  .mthumb canvas { max-width: 100%; max-height: 100%; }
+  .opts { margin: 0 0 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 0 14px; }
+  .opts summary { cursor: pointer; padding: 12px 0; display: flex; justify-content: space-between; gap: 10px; font-weight: 700; }
+  .opts summary small { color: var(--muted); font-weight: 600; }
+  .optgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; padding-bottom: 14px; }
+  .opts fieldset { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px 12px; display: grid; gap: 8px; margin: 0; min-width: 0; align-content: start; }
+  .opts legend { font-weight: 700; font-size: .88rem; padding: 0 6px; }
+  .opts legend label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+  .opts select, .opts input[type=text], .opts input[type=number] { height: 36px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-2); padding: 0 10px; width: 100%; min-width: 0; }
+  .opts .inl { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--muted); }
+  .opts .inl input[type=number] { width: 80px; }
+  .opts .inl input[type=range] { flex: 1; accent-color: var(--accent); }
+  .opts small { color: var(--muted); font-size: .78rem; line-height: 1.35; }
+  .opts input[type=checkbox] { accent-color: var(--accent); }
 </style>
 </head>
 <body>
@@ -305,7 +348,7 @@
   <div class="brand">
     <div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <div>
-      <h1>PDF MATRIX</h1>
+      <h1>PDF Matrix</h1>
       <p id="fileInfo">Selecciona, gira y descarga páginas</p>
     </div>
   </div>
@@ -325,6 +368,16 @@
       <input type="file" id="fileInput" accept="application/pdf,.pdf" multiple hidden>
     </label>
     <div class="privacy"><svg><use href="#i-lock"/></svg> Tu archivo no se sube a ningún servidor: todo se procesa en tu navegador.</div>
+  </section>
+
+  <!-- Unir documentos (en la página) -->
+  <section class="sheet mergeview" id="mergeView" hidden aria-labelledby="mergeTitle">
+    <h3 id="mergeTitle">Unir documentos</h3>
+    <p class="sub">Arrastra los documentos o usa las flechas para definir el orden: el primero de la lista queda primero en el PDF.</p>
+    <div class="seg" id="mergeSeg"><button data-mode="all" class="on">Todo el documento</button><button data-mode="pages">Por páginas</button></div>
+    <div class="mlist" id="mergeList"></div>
+    <p class="sub" id="mergeHint"></p>
+    <div class="actions"><button class="btn ghost" id="mergeCancel">Cancelar</button><button class="btn primary" id="mergeOk">Unir y continuar</button></div>
   </section>
 
   <!-- Espacio de trabajo -->
@@ -373,11 +426,32 @@
           <button data-dl="one">Un solo PDF</button>
           <button data-dl="pages">Una página por archivo (ZIP)</button>
           <button data-dl="ranges">Dividir por rangos (ZIP)…</button>
+          <label class="chk"><input type="checkbox" id="askName"> Cambiar nombre antes de descargar</label>
           <small>Sin páginas marcadas se descarga todo el documento.</small>
         </div>
       </div>
     </div>
     <p class="hint">Clic para marcar · Shift + clic para un rango · arrastra una página para reordenarla (si hay varias marcadas, se mueven juntas) · doble clic para verla en grande · Ctrl+Z / Ctrl+Y para deshacer y rehacer.</p>
+    <details class="opts" id="opts">
+      <summary><span>Opciones de descarga</span><small id="optsSum">Ninguna activa</small></summary>
+      <div class="optgrid">
+        <fieldset><legend>Compresión</legend>
+          <select id="cmp" aria-label="Compresión"><option value="none">Sin compresión (conserva el texto)</option><option value="media">Media · imagen 150 ppp</option><option value="alta">Alta · imagen 100 ppp</option></select>
+          <small>Comprimir convierte las páginas en imagen: el texto ya no se podrá seleccionar.</small></fieldset>
+        <fieldset><legend><label><input type="checkbox" id="numOn"> Numeración</label></legend>
+          <select id="numPos" aria-label="Posición"><option value="bc">Abajo al centro</option><option value="br">Abajo a la derecha</option><option value="bl">Abajo a la izquierda</option><option value="tc">Arriba al centro</option><option value="tr">Arriba a la derecha</option><option value="tl">Arriba a la izquierda</option></select>
+          <select id="numFmt" aria-label="Formato"><option value="n">1</option><option value="nN">1 / 10</option><option value="pag">Página 1 de 10</option></select>
+          <label class="inl">Empezar en <input type="number" id="numStart" value="1" min="1"></label></fieldset>
+        <fieldset><legend><label><input type="checkbox" id="wmOn"> Marca de agua</label></legend>
+          <input type="text" id="wmText" value="BORRADOR" maxlength="40" aria-label="Texto de la marca de agua">
+          <label class="inl">Opacidad <input type="range" id="wmOp" min="0.05" max="0.6" step="0.01" value="0.2"></label></fieldset>
+        <fieldset><legend><label><input type="checkbox" id="stOn"> Sello</label></legend>
+          <select id="stPreset" aria-label="Texto del sello"><option>COPIA</option><option>ORIGINAL</option><option>APROBADO</option><option>CONFIDENCIAL</option><option>PAGADO</option><option value="otro">Otro texto…</option></select>
+          <input type="text" id="stText" maxlength="30" placeholder="Texto del sello" hidden>
+          <select id="stPos" aria-label="Posición del sello"><option value="tr">Arriba a la derecha</option><option value="tl">Arriba a la izquierda</option><option value="br">Abajo a la derecha</option><option value="bl">Abajo a la izquierda</option><option value="c">Centro</option></select>
+          <label class="inl"><input type="checkbox" id="stDate"> Agregar fecha</label></fieldset>
+      </div>
+    </details>
     <div class="grid" id="grid"></div>
     <div class="empty" id="empty" hidden>No quedan páginas. Usa Deshacer o inserta un PDF.</div>
   </section>
@@ -403,6 +477,14 @@
 </div>
 
 <input type="file" id="fileAdd" accept="application/pdf,.pdf" multiple hidden>
+<div class="modal" id="nameModal" role="dialog" aria-modal="true" aria-labelledby="nameTitle">
+  <div class="sheet">
+    <h3 id="nameTitle">Nombre del archivo</h3>
+    <p class="sub">Escribe cómo quieres llamar al archivo. La extensión (.pdf o .zip) se agrega sola.</p>
+    <input class="name" id="nameInput" type="text" maxlength="120" autocomplete="off" aria-label="Nombre del archivo">
+    <div class="actions"><button class="btn ghost" id="nameCancel">Cancelar</button><button class="btn primary" id="nameOk">Descargar</button></div>
+  </div>
+</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="busy" id="busy"><div><span class="spin"></span><span id="busyText">Procesando…</span></div></div>
 
@@ -414,7 +496,7 @@
   'use strict';
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   const $ = (id) => document.getElementById(id);
-  const el = Object.fromEntries('hero drop fileInput fileAdd workspace grid empty count dlLabel fileInfo btnNew btnAll btnNone btnRotL btnRotR btnDup btnDel btnUndo btnRedo btnDownload btnDlMore dlMenu btnInsert insMenu rangeInput btnRange btnTheme toast busy busyText viewer viewerCanvas vLabel vPrev vNext vRotL vRotR vSel vSelText vClose vScroll vZin vZout vFit zoomRange zIn zOut'.split(' ').map((k) => [k, $(k)]));
+  const el = Object.fromEntries('hero drop fileInput fileAdd workspace grid empty count dlLabel fileInfo btnNew btnAll btnNone btnRotL btnRotR btnDup btnDel btnUndo btnRedo btnDownload btnDlMore dlMenu btnInsert insMenu rangeInput btnRange btnTheme toast busy busyText viewer viewerCanvas vLabel vPrev vNext vRotL vRotR vSel vSelText vClose vScroll vZin vZout vFit zoomRange zIn zOut mergeView mergeSeg mergeList mergeHint mergeCancel mergeOk nameModal nameInput nameOk nameCancel askName opts optsSum cmp numOn numPos numFmt numStart wmOn wmText wmOp stOn stPreset stText stDate stPos'.split(' ').map((k) => [k, $(k)]));
   const MAX_DPR = 2, root = document.documentElement;
   const sources = new Map(), cards = new Map();
   let items = [], itemMap = new Map(), history = [], future = [];
@@ -658,20 +740,106 @@
     }
     return fresh;
   }
+  const dropSource = (s) => { sources.delete(s.id); try { s.doc.destroy(); } catch (e) {} };
   async function openFiles(files, { replace = false, at = null } = {}) {
     busy(true, 'Leyendo PDF…');
     try {
       const old = [...sources.values()], fresh = await addSources(files); if (!fresh.length) return;
-      const list = fresh.flatMap((s) => Array.from({ length: s.doc.numPages }, (_, k) => ({ id: uid(), src: s.id, n: k + 1, rot: 0, sel: false })));
+      let plan = fresh.map((s) => ({ s, pages: Array.from({ length: s.doc.numPages }, (_, k) => k + 1) }));
+      if (fresh.length > 1) {
+        busy(false); const p = await mergeDialog(fresh); busy(true, 'Preparando…');
+        if (!p) { fresh.forEach(dropSource); return; }
+        plan = p; fresh.filter((s) => !plan.some((x) => x.s === s)).forEach(dropSource);
+      }
+      const list = plan.flatMap(({ s, pages }) => pages.map((n) => ({ id: uid(), src: s.id, n, rot: 0, sel: false })));
       if (replace) {
-        old.forEach((s) => { sources.delete(s.id); try { s.doc.destroy(); } catch (e) {} });
-        history = []; future = []; cards.forEach((c) => c.card.remove()); cards.clear(); lastClicked = -1;
-        items = list; fileName = fresh[0].name.replace(/\.pdf$/i, '') + (fresh.length > 1 ? '_unido' : '');
+        old.forEach(dropSource); history = []; future = []; cards.forEach((c) => c.card.remove()); cards.clear(); lastClicked = -1;
+        items = list; fileName = plan[0].s.name.replace(/\.pdf$/i, '') + (plan.length > 1 ? '_unido' : '');
         el.hero.hidden = true; el.workspace.hidden = false; el.btnNew.hidden = false; window.scrollTo({ top: 0 });
       } else { commit('Añadir PDF'); items.splice(at == null ? items.length : at, 0, ...list); }
       syncGrid(); if (!replace) flash(list.map((i) => i.id));
     } finally { busy(false); }
   }
+
+  /* ---------- Diálogo para unir y diálogo de nombre ---------- */
+  const esc = (t) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const fmtSize = (n) => (n < 1048576 ? Math.max(1, Math.round(n / 1024)) + ' KB' : (n / 1048576).toFixed(1) + ' MB');
+  function mergeDialog(list) {
+    return new Promise((resolve) => {
+      const rows = list.map((s) => ({ s, range: '' })); let mode = 'all', from = -1;
+      el.mergeSeg.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x.dataset.mode === 'all'));
+      const hint = (t, err = false) => {
+        el.mergeHint.textContent = t || (mode === 'all' ? 'Se unirán todas las páginas de cada documento, en este orden.' : 'Escribe qué páginas tomar de cada documento (ej. 1-3, 5). Si lo dejas vacío, se toman todas.');
+        el.mergeHint.classList.toggle('error', err);
+      };
+      const draw = () => {
+        el.mergeList.innerHTML = rows.map((r, i) => `<div class="mrow" draggable="true" data-i="${i}">
+          <span class="mnum">${i + 1}</span><div class="mthumb" data-t="${i}"></div>
+          <div class="minfo"><b title="${esc(r.s.name)}">${esc(r.s.name)}</b><span>${fmtSize(r.s.bytes.length)} · ${r.s.doc.numPages} ${r.s.doc.numPages === 1 ? 'página' : 'páginas'}</span></div>
+          ${mode === 'pages' ? `<input data-r="${i}" value="${esc(r.range)}" placeholder="Todas" aria-label="Páginas de ${esc(r.s.name)}">` : ''}
+          <button class="icon-btn" data-m="up" title="Subir" aria-label="Subir" ${i === 0 ? 'disabled' : ''}><svg class="r90"><use href="#i-chev-l"/></svg></button>
+          <button class="icon-btn" data-m="down" title="Bajar" aria-label="Bajar" ${i === rows.length - 1 ? 'disabled' : ''}><svg class="r90"><use href="#i-chev-r"/></svg></button>
+          <button class="icon-btn" data-m="del" title="Quitar de la unión" aria-label="Quitar" ${rows.length < 2 ? 'disabled' : ''}><svg><use href="#i-close"/></svg></button>
+        </div>`).join('');
+        rows.forEach((r, i) => { const h = el.mergeList.querySelector(`[data-t="${i}"]`); if (h && r.thumb) h.appendChild(r.thumb); });
+      };
+      el.mergeSeg.onclick = (e) => {
+        const b = e.target.closest('[data-mode]'); if (!b) return; mode = b.dataset.mode;
+        el.mergeSeg.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); hint(); draw();
+      };
+      el.mergeList.onclick = (e) => {
+        const b = e.target.closest('[data-m]'); if (!b || b.disabled) return; const i = +b.closest('.mrow').dataset.i;
+        if (b.dataset.m === 'up') [rows[i - 1], rows[i]] = [rows[i], rows[i - 1]];
+        else if (b.dataset.m === 'down') [rows[i + 1], rows[i]] = [rows[i], rows[i + 1]];
+        else rows.splice(i, 1);
+        hint(); draw();
+      };
+      el.mergeList.oninput = (e) => { if (e.target.dataset.r != null) rows[+e.target.dataset.r].range = e.target.value; };
+      const clearOver = () => el.mergeList.querySelectorAll('.over').forEach((n) => n.classList.remove('over'));
+      el.mergeList.ondragstart = (e) => { const r = e.target.closest('.mrow'); if (!r) return; from = +r.dataset.i; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', 'doc'); };
+      el.mergeList.ondragover = (e) => { if (from < 0) return; e.preventDefault(); clearOver(); const r = e.target.closest('.mrow'); if (r) r.classList.add('over'); };
+      el.mergeList.ondragend = () => { from = -1; clearOver(); };
+      el.mergeList.ondrop = (e) => {
+        const r = e.target.closest('.mrow'); if (from < 0 || !r) return; e.preventDefault();
+        const to = +r.dataset.i; if (to !== from) { const [x] = rows.splice(from, 1); rows.splice(to, 0, x); }
+        from = -1; draw();
+      };
+      const prev = [el.hero.hidden, el.workspace.hidden];
+      const close = (v) => { el.mergeView.hidden = true; el.hero.hidden = prev[0]; el.workspace.hidden = prev[1]; resolve(v); };
+      el.mergeCancel.onclick = () => close(null);
+      el.mergeOk.onclick = () => {
+        const plan = [];
+        for (const r of rows) {
+          const n = r.s.doc.numPages; let pages;
+          if (mode === 'pages' && r.range.trim()) {
+            const ix = parseRange(r.range, n);
+            if (!ix) { hint(`Rango no válido en «${r.s.name}». Ejemplo: 1-3, 5 (máx. ${n}).`, true); return; }
+            pages = ix.map((k) => k + 1);
+          } else pages = Array.from({ length: n }, (_, k) => k + 1);
+          plan.push({ s: r.s, pages });
+        }
+        close(plan);
+      };
+      rows.forEach((r) => { const it = { src: r.s.id, n: 1, rot: 0 }; itemBase(it).then((b) => rasterize(it, 72 / b.w, b)).then((c) => { r.thumb = c; draw(); }).catch(() => {}); });
+      hint(); draw();
+      el.hero.hidden = true; el.workspace.hidden = true; el.mergeView.hidden = false; window.scrollTo({ top: 0 });
+    });
+  }
+  function askName(def) {
+    return new Promise((resolve) => {
+      el.nameInput.value = def; el.nameModal.classList.add('open');
+      setTimeout(() => { el.nameInput.focus(); el.nameInput.select(); }, 30);
+      const done = (v) => { el.nameModal.classList.remove('open'); resolve(v); };
+      el.nameOk.onclick = () => {
+        const v = el.nameInput.value.replace(/\.(pdf|zip)$/i, '').replace(/[\\/:*?"<>|]+/g, '').trim();
+        if (!v) { el.nameInput.focus(); return; } done(v);
+      };
+      el.nameCancel.onclick = () => done(null);
+      el.nameInput.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); el.nameOk.click(); } };
+    });
+  }
+  el.nameModal.addEventListener('mousedown', (e) => { if (e.target === el.nameModal) el.nameCancel.click(); });
+
   el.drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.fileInput.click(); } });
   el.fileInput.addEventListener('change', () => { if (el.fileInput.files.length) openFiles([...el.fileInput.files], { replace: true }); el.fileInput.value = ''; });
   el.fileAdd.addEventListener('change', () => { if (el.fileAdd.files.length) openFiles([...el.fileAdd.files], { at: insertTarget }); el.fileAdd.value = ''; });
@@ -698,19 +866,63 @@
     const b = e.target.closest('[data-ins]'); if (!b) return;
     if (b.dataset.ins === 'blank') insertBlank(); else { insertTarget = insertAt(); el.fileAdd.click(); }
   });
-  el.dlMenu.addEventListener('click', (e) => { const b = e.target.closest('[data-dl]'); if (b) download(b.dataset.dl); });
+  el.dlMenu.addEventListener('click', (e) => { e.stopPropagation(); const b = e.target.closest('[data-dl]'); if (b) { closeMenus(); download(b.dataset.dl); } });
 
   /* ---------- Descarga ---------- */
-  async function buildPdf(list) {
+  function updateOpts() {
+    const n = [el.cmp.value !== 'none', el.numOn.checked, el.wmOn.checked, el.stOn.checked].filter(Boolean).length;
+    el.optsSum.textContent = n ? `${n} ${n === 1 ? 'activa' : 'activas'}` : 'Ninguna activa';
+    el.stText.hidden = el.stPreset.value !== 'otro';
+  }
+  el.opts.addEventListener('input', updateOpts); el.opts.addEventListener('change', updateOpts);
+  async function overlays(doc, meta, nm) {
+    const { degrees, rgb, StandardFonts } = PDFLib;
+    const num = el.numOn.checked, wmT = el.wmOn.checked ? el.wmText.value.trim() : '', st = el.stOn.checked;
+    const stT = (el.stPreset.value === 'otro' ? el.stText.value : el.stPreset.value).trim() + (el.stDate.checked ? ' · ' + new Date().toLocaleDateString('es-CO') : '');
+    if (!num && !wmT && !(st && stT)) return;
+    const font = await doc.embedFont(StandardFonts.Helvetica), bold = await doc.embedFont(StandardFonts.HelveticaBold);
+    doc.getPages().forEach((pg, k) => {
+      const R = norm(pg.getRotation().angle), w = pg.getWidth(), h = pg.getHeight(), sw = R === 90 || R === 270, W = sw ? h : w, H = sw ? w : h;
+      const P = (vx, vy) => (R === 90 ? { x: w - vy, y: vx } : R === 180 ? { x: w - vx, y: h - vy } : R === 270 ? { x: vy, y: h - vx } : { x: vx, y: vy });
+      const put = (t, f, size, vx, vy, extra, o) => { const q = P(vx, vy); pg.drawText(t, { x: q.x, y: q.y, size, font: f, rotate: degrees(R + extra), ...o }); };
+      if (wmT) {
+        const t0 = bold.widthOfTextAtSize(wmT, 100), size = Math.max(18, Math.min(150, (100 * Math.min(W, H) * 1.05) / t0)), tw = (t0 * size) / 100, a = Math.PI / 4, ox = tw / 2, oy = size * 0.3;
+        put(wmT, bold, size, W / 2 - (ox * Math.cos(a) - oy * Math.sin(a)), H / 2 - (ox * Math.sin(a) + oy * Math.cos(a)), 45, { color: rgb(0.5, 0.5, 0.5), opacity: +el.wmOp.value });
+      }
+      if (num) {
+        const n = nm.map.get(meta[k].id), f = el.numFmt.value, t = f === 'n' ? `${n}` : f === 'nN' ? `${n} / ${nm.total}` : `Página ${n} de ${nm.total}`;
+        const size = 10, tw = font.widthOfTextAtSize(t, size), pos = el.numPos.value;
+        const vx = pos[1] === 'l' ? 30 : pos[1] === 'r' ? W - 30 - tw : (W - tw) / 2, vy = pos[0] === 'b' ? 24 : H - 24 - size;
+        put(t, font, size, vx, vy, 0, { color: rgb(0.25, 0.25, 0.25) });
+      }
+      if (st && stT) {
+        const size = Math.max(14, W * 0.035), tw = bold.widthOfTextAtSize(stT, size), pad = size * 0.4, bw = tw + 2 * pad, bh = size + 2 * pad, pos = el.stPos.value;
+        const bx = pos === 'c' ? (W - bw) / 2 : pos[1] === 'l' ? 30 : W - 30 - bw, by = pos === 'c' ? (H - bh) / 2 : pos[0] === 'b' ? 30 : H - 30 - bh, red = rgb(0.8, 0.1, 0.1);
+        const q = P(bx, by); pg.drawRectangle({ x: q.x, y: q.y, width: bw, height: bh, borderColor: red, borderWidth: 2, rotate: degrees(R) });
+        put(stT, bold, size, bx + pad, by + pad + size * 0.2, 0, { color: red });
+      }
+    });
+  }
+  async function buildPdf(list, nm) {
     const { PDFDocument, degrees } = PDFLib, out = await PDFDocument.create(), libs = new Map();
+    const cmp = el.cmp.value, qa = cmp === 'alta' ? [100 / 72, 0.6] : [150 / 72, 0.78];
     for (const it of list) {
-      if (it.blank) { out.addPage([it.w, it.h]).setRotation(degrees(it.rot)); continue; }
-      let lib = libs.get(it.src);
-      if (!lib) { lib = await PDFDocument.load(sources.get(it.src).bytes, { ignoreEncryption: true }); libs.set(it.src, lib); }
-      const [pg] = await out.copyPages(lib, [it.n - 1]);
-      if (it.rot) pg.setRotation(degrees(norm(pg.getRotation().angle + it.rot)));
-      out.addPage(pg);
+      if (cmp !== 'none') {
+        const base = await itemBase(it), c = await rasterize(it, Math.min(qa[0], 4000 / Math.max(base.w, base.h)), base);
+        const blob = await new Promise((r) => c.toBlob(r, 'image/jpeg', qa[1]));
+        const img = await out.embedJpg(await blob.arrayBuffer());
+        out.addPage([base.w, base.h]).drawImage(img, { x: 0, y: 0, width: base.w, height: base.h });
+        await new Promise((r) => setTimeout(r));
+      } else if (it.blank) out.addPage([it.w, it.h]).setRotation(degrees(it.rot));
+      else {
+        let lib = libs.get(it.src);
+        if (!lib) { lib = await PDFDocument.load(sources.get(it.src).bytes, { ignoreEncryption: true }); libs.set(it.src, lib); }
+        const [pg] = await out.copyPages(lib, [it.n - 1]);
+        if (it.rot) pg.setRotation(degrees(norm(pg.getRotation().angle + it.rot)));
+        out.addPage(pg);
+      }
     }
+    await overlays(out, list, nm);
     return out.save();
   }
   function saveBlob(blob, name) {
@@ -719,27 +931,32 @@
   }
   async function download(mode) {
     const sel = selected(), list = sel.length ? sel : items; if (!list.length) return;
+    let ranges;
+    if (mode === 'ranges') {
+      const txt = prompt('Escribe los rangos separados por | (usa los números de página que ves en pantalla).\nEjemplo: 1-3 | 4-6 | 7-10', '');
+      if (!txt) return;
+      ranges = txt.split('|').map((t) => t.trim()).filter(Boolean).map((t) => [t.replace(/[^\d]+/g, '-'), parseRange(t, items.length)]);
+      const bad = ranges.findIndex(([, ix]) => !ix);
+      if (bad >= 0 || !ranges.length) { toast('Rango no válido. Usa por ejemplo: 1-3 | 4-6', true); return; }
+      ranges = ranges.map(([label, ix]) => [label, ix.sort((x, y) => x - y).map((i) => items[i])]);
+    }
+    const baseList = mode === 'ranges' ? items : list, start = Math.max(1, +el.numStart.value || 1);
+    const nm = { map: new Map(baseList.map((it, i) => [it.id, start + i])), total: baseList.length + start - 1 };
+    let out = fileName + (mode === 'one' ? (sel.length ? '_seleccion' : '_editado') : mode === 'pages' ? '_paginas' : '_partes'), inner = fileName;
+    if (el.askName.checked) { const n = await askName(out); if (!n) return; out = n; inner = n; }
     busy(true, 'Generando…');
     try {
-      if (mode === 'one') {
-        saveBlob(new Blob([await buildPdf(list)], { type: 'application/pdf' }), fileName + (sel.length ? '_seleccion' : '_editado') + '.pdf');
-      } else {
-        let groups;
-        if (mode === 'pages') groups = list.map((it, k) => [`${fileName}_p${String(k + 1).padStart(3, '0')}`, [it]]);
-        else {
-          const txt = prompt('Escribe los rangos separados por | (usa los números de página que ves en pantalla).\nEjemplo: 1-3 | 4-6 | 7-10', '');
-          if (!txt) return;
-          groups = txt.split('|').map((t) => t.trim()).filter(Boolean).map((t) => {
-            const ix = parseRange(t, items.length); if (!ix) throw new Error('Rango no válido: ' + t);
-            return [`${fileName}_${t.replace(/[^\d]+/g, '-')}`, ix.sort((a, b) => a - b).map((i) => items[i])];
-          });
-        }
+      if (mode === 'one') saveBlob(new Blob([await buildPdf(list, nm)], { type: 'application/pdf' }), out + '.pdf');
+      else {
+        const groups = mode === 'pages'
+          ? list.map((it, k) => [`${inner}_p${String(k + 1).padStart(3, '0')}`, [it]])
+          : ranges.map(([label, l]) => [`${inner}_${label}`, l]);
         const zip = new JSZip(); let k = 0;
-        for (const [name, l] of groups) { busy(true, `Generando ${++k} de ${groups.length}…`); zip.file(name + '.pdf', await buildPdf(l)); }
-        saveBlob(await zip.generateAsync({ type: 'blob' }), fileName + (mode === 'pages' ? '_paginas' : '_partes') + '.zip');
+        for (const [name, l] of groups) { busy(true, `Generando ${++k} de ${groups.length}…`); zip.file(name + '.pdf', await buildPdf(l, nm)); }
+        saveBlob(await zip.generateAsync({ type: 'blob' }), out + '.zip');
       }
       toast('Descarga lista.');
-    } catch (err) { console.error(err); toast(String(err.message).startsWith('Rango') ? err.message : 'No se pudo generar el archivo.', true); }
+    } catch (err) { console.error(err); toast(/encode|WinAnsi/i.test(String(err.message)) ? 'El texto de la marca o del sello tiene caracteres no compatibles.' : 'No se pudo generar el archivo.', true); }
     finally { busy(false); }
   }
   el.btnDownload.addEventListener('click', () => download('one'));
@@ -802,6 +1019,10 @@
   /* ---------- Atajos ---------- */
   window.addEventListener('keydown', (e) => {
     const k = e.key.toLowerCase(), mod = e.ctrlKey || e.metaKey, field = e.target.matches('input,textarea');
+    if (!el.mergeView.hidden || el.nameModal.classList.contains('open')) {
+      if (k === 'escape') (el.nameModal.classList.contains('open') ? el.nameCancel : el.mergeCancel).click();
+      if (el.nameModal.classList.contains('open') || field) return;
+    }
     if (mod && (k === 'z' || k === 'y') && !field && items.length + history.length) { e.preventDefault(); (k === 'y' || e.shiftKey) ? redo() : undo(); return; }
     if (viewerIndex >= 0) {
       if (k === 'escape') closeViewer(); else if (k === 'arrowleft') goto(-1); else if (k === 'arrowright') goto(1);
