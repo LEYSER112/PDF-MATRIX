@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unir PDF · PDF Matrix</title><meta name="description" content="Une varios PDF en uno solo desde tu navegador.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📑</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/matrix.css"></head><body>
+<header class="topbar">
+  <a class="brand" href="index.html" title="Volver al inicio"><div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div><h1>PDF Matrix</h1><p>Unir PDF</p></div></a>
+  <a class="btn ghost" href="index.html"><svg><use href="#i-chev-l"/></svg><span class="t">Inicio</span></a>
+  <button class="icon-btn" id="btnTheme" title="Cambiar tema" aria-label="Cambiar tema"><svg><use href="#i-theme"/></svg></button>
+</header>
+<main><div class="page">
+  <section class="panel">
+    <h2>Unir PDF</h2>
+    <p class="sub">Sube dos o más PDF, ordénalos y únelos en un solo archivo.</p>
+    <label class="drop" id="drop" tabindex="0"><div class="drop-icon"><svg><use href="#i-upload"/></svg></div><strong>Arrastra tus PDF aquí o haz clic para elegirlos</strong><span>Puedes volver a subir más cuando quieras</span><input type="file" id="fileInput" accept="application/pdf,.pdf" multiple hidden></label>
+  </section>
+  <section class="panel" id="work" hidden>
+    <div class="seg" id="seg"><button data-mode="all" class="on">Todo el documento</button><button data-mode="pages">Por páginas</button></div>
+    <div class="mlist" id="list"></div>
+    <p class="sub" id="hint"></p>
+    <div class="field"><label for="outName"><b>Nombre del archivo</b></label><input type="text" id="outName" value="unido" maxlength="120" autocomplete="off"></div>
+    <div class="actions"><span class="sub" id="sum" style="margin:0 auto 0 0"></span><button class="btn primary" id="btnGo"><svg><use href="#i-download"/></svg>Unir y descargar</button></div>
+  </section>
+</div></main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="assets/matrix.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id), { esc, fmtSize } = Matrix;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  Matrix.initTheme($('btnTheme'));
+  let rows = [], mode = 'all', from = -1, seq = 0, busy = false;
+  const hint = (t, err) => { const h = $('hint'); h.textContent = t || (mode === 'all' ? 'Se unirán todas las páginas de cada documento, en este orden.' : 'Escribe qué páginas tomar de cada documento (ej. 1-3, 5). Si lo dejas vacío, se toman todas.'); h.classList.toggle('error', !!err); };
+  async function addFiles(list) {
+    const pdfs = [...list].filter(Matrix.isPdf);
+    if (pdfs.length < list.length) Matrix.toast('Se ignoraron archivos que no son PDF.', true);
+    for (const f of pdfs) {
+      try {
+        const bytes = new Uint8Array(await f.arrayBuffer()), doc = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
+        const r = { id: ++seq, name: f.name, size: f.size, bytes, pages: doc.numPages, range: '', thumb: null }; rows.push(r);
+        doc.getPage(1).then(async (p) => {
+          const v = p.getViewport({ scale: 1 }), vp = p.getViewport({ scale: (72 * Math.min(devicePixelRatio || 1, 2)) / v.width });
+          const c = document.createElement('canvas'); c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+          await p.render({ canvasContext: c.getContext('2d', { alpha: false }), viewport: vp }).promise; r.thumb = c; doc.destroy(); draw();
+        }).catch(() => {});
+      } catch (e) { Matrix.toast(e && e.name === 'PasswordException' ? `${f.name}: protegido con contraseña.` : `No se pudo leer ${f.name}.`, true); }
+    }
+    hint(); draw();
+  }
+  function draw() {
+    $('work').hidden = !rows.length;
+    $('list').innerHTML = rows.map((r, i) => `<div class="mrow" draggable="true" data-i="${i}"><span class="mnum">${i + 1}</span><div class="mthumb" data-t="${i}"></div><div class="minfo"><b title="${esc(r.name)}">${esc(r.name)}</b><span>${fmtSize(r.size)} · ${r.pages} ${r.pages === 1 ? 'página' : 'páginas'}</span></div>${mode === 'pages' ? `<input data-r="${i}" value="${esc(r.range)}" placeholder="Todas" aria-label="Páginas de ${esc(r.name)}">` : ''}<button class="icon-btn" data-m="up" aria-label="Subir" ${i === 0 ? 'disabled' : ''}><svg class="r90"><use href="#i-chev-l"/></svg></button><button class="icon-btn" data-m="down" aria-label="Bajar" ${i === rows.length - 1 ? 'disabled' : ''}><svg class="r90"><use href="#i-chev-r"/></svg></button><button class="icon-btn" data-m="del" aria-label="Quitar"><svg><use href="#i-close"/></svg></button></div>`).join('');
+    rows.forEach((r, i) => { const h = $('list').querySelector(`[data-t="${i}"]`); if (h && r.thumb) h.appendChild(r.thumb); });
+    const tp = rows.reduce((a, r) => a + r.pages, 0), ts = rows.reduce((a, r) => a + r.size, 0);
+    $('sum').textContent = rows.length < 2 ? 'Añade al menos dos PDF para unirlos.' : `${rows.length} documentos · ${tp} páginas · ${fmtSize(ts)}`;
+    $('btnGo').disabled = rows.length < 2 || busy;
+  }
+  $('seg').onclick = (e) => { const b = e.target.closest('[data-mode]'); if (!b) return; mode = b.dataset.mode; $('seg').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); hint(); draw(); };
+  $('list').onclick = (e) => {
+    const b = e.target.closest('[data-m]'); if (!b || b.disabled) return; const i = +b.closest('.mrow').dataset.i;
+    if (b.dataset.m === 'up') [rows[i - 1], rows[i]] = [rows[i], rows[i - 1]];
+    else if (b.dataset.m === 'down') [rows[i + 1], rows[i]] = [rows[i], rows[i + 1]];
+    else rows.splice(i, 1);
+    hint(); draw();
+  };
+  $('list').oninput = (e) => { if (e.target.dataset.r != null) rows[+e.target.dataset.r].range = e.target.value; };
+  const clearOver = () => $('list').querySelectorAll('.over').forEach((n) => n.classList.remove('over'));
+  $('list').ondragstart = (e) => { const r = e.target.closest('.mrow'); if (!r) return; from = +r.dataset.i; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', 'doc'); };
+  $('list').ondragover = (e) => { if (from < 0) return; e.preventDefault(); clearOver(); const r = e.target.closest('.mrow'); if (r) r.classList.add('over'); };
+  $('list').ondragend = () => { from = -1; clearOver(); };
+  $('list').ondrop = (e) => { const r = e.target.closest('.mrow'); if (from < 0 || !r) return; e.preventDefault(); const to = +r.dataset.i; if (to !== from) { const [x] = rows.splice(from, 1); rows.splice(to, 0, x); } from = -1; draw(); };
+  $('fileInput').onchange = (e) => { addFiles(e.target.files); e.target.value = ''; };
+  $('drop').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('fileInput').click(); } });
+  const hasFiles = (e) => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+  window.addEventListener('dragover', (e) => { if (hasFiles(e)) { e.preventDefault(); $('drop').classList.add('over'); } });
+  window.addEventListener('dragleave', (e) => { if (!e.relatedTarget) $('drop').classList.remove('over'); });
+  window.addEventListener('drop', (e) => { if (hasFiles(e)) { e.preventDefault(); $('drop').classList.remove('over'); addFiles(e.dataTransfer.files); } });
+
+  $('btnGo').onclick = async () => {
+    const { PDFDocument } = PDFLib; busy = true; draw();
+    try {
+      const out = await PDFDocument.create();
+      for (const r of rows) {
+        const src = await PDFDocument.load(r.bytes, { ignoreEncryption: true }); let idx;
+        if (mode === 'pages' && r.range.trim()) {
+          idx = Matrix.parseRange(r.range, r.pages);
+          if (!idx) { hint(`Rango no válido en «${r.name}». Ejemplo: 1-3, 5 (máx. ${r.pages}).`, true); return; }
+        } else idx = src.getPageIndices();
+        (await out.copyPages(src, idx)).forEach((p) => out.addPage(p));
+      }
+      const name = $('outName').value.replace(/\.pdf$/i, '').replace(/[\\/:*?"<>|]+/g, '').trim() || 'unido';
+      Matrix.saveBlob(new Blob([await out.save()], { type: 'application/pdf' }), name + '.pdf'); Matrix.toast('PDF unido y descargado.');
+    } catch (e) { console.error(e); Matrix.toast('No se pudo unir los archivos.', true); }
+    finally { busy = false; draw(); }
+  };
+  hint();
+})();
+</script>
+</body></html>

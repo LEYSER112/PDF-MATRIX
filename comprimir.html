@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Comprimir PDF · PDF Matrix</title><meta name="description" content="Reduce el peso de tus PDF en el navegador.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📑</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/matrix.css"></head><body>
+<header class="topbar">
+  <a class="brand" href="index.html" title="Volver al inicio"><div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div><h1>PDF Matrix</h1><p>Comprimir PDF</p></div></a>
+  <a class="btn ghost" href="index.html"><svg><use href="#i-chev-l"/></svg><span class="t">Inicio</span></a>
+  <button class="icon-btn" id="btnTheme" title="Cambiar tema" aria-label="Cambiar tema"><svg><use href="#i-theme"/></svg></button>
+</header>
+<main><div class="page">
+  <section class="panel">
+    <h2>Comprimir PDF</h2>
+    <p class="sub">Reduce el peso de tus PDF sin salir del navegador. Si un archivo no se puede reducir, te lo avisamos y no se cambia nada: el resultado nunca pesa más que el original.</p>
+    <label class="drop" id="drop" tabindex="0"><div class="drop-icon"><svg><use href="#i-upload"/></svg></div><strong>Arrastra tus PDF aquí o haz clic para elegirlos</strong><span>Puedes subir varios a la vez</span><input type="file" id="fileInput" accept="application/pdf,.pdf" multiple hidden></label>
+  </section>
+  <section class="panel" id="work" hidden>
+    <div class="mlist" id="fileList"></div>
+    <div class="levels">
+      <label class="level"><input type="radio" name="lvl" value="media" checked><div><b>Equilibrada</b><span>Reduce el tamaño de las imágenes y conserva el texto. Recomendada.</span></div></label>
+      <label class="level"><input type="radio" name="lvl" value="alta"><div><b>Fuerte</b><span>Reduce más las imágenes y conserva el texto. Puede notarse algo de pérdida de calidad.</span></div></label>
+      <label class="level"><input type="radio" name="lvl" value="max"><div><b>Máxima (convertir a imagen)</b><span>Para escaneos que no bajan de peso de otra forma. El texto deja de ser seleccionable.</span></div></label>
+    </div>
+    <div class="actions"><button class="btn primary" id="btnGo"><svg><use href="#i-compress"/></svg>Comprimir</button></div>
+  </section>
+  <section class="panel" id="results" hidden>
+    <h2>Resultado</h2><div id="resList" style="margin-top:12px"></div>
+    <div class="actions" id="zipRow" hidden><button class="btn primary" id="btnZip"><svg><use href="#i-download"/></svg>Descargar todo (ZIP)</button></div>
+  </section>
+</div></main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="assets/matrix.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id), { esc, fmtSize } = Matrix;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  Matrix.initTheme($('btnTheme'));
+  let files = [], results = [], busy = false;
+  function addFiles(list) {
+    const pdfs = [...list].filter(Matrix.isPdf);
+    if (pdfs.length < list.length) Matrix.toast('Se ignoraron archivos que no son PDF.', true);
+    files.push(...pdfs); render();
+  }
+  function render() {
+    $('work').hidden = !files.length;
+    $('fileList').innerHTML = files.map((f, i) => `<div class="mrow" style="cursor:default"><span class="mnum">${i + 1}</span><div class="minfo"><b title="${esc(f.name)}">${esc(f.name)}</b><span>${fmtSize(f.size)}</span></div><button class="icon-btn" data-del="${i}" aria-label="Quitar"><svg><use href="#i-close"/></svg></button></div>`).join('');
+  }
+  $('fileList').onclick = (e) => { const b = e.target.closest('[data-del]'); if (b && !busy) { files.splice(+b.dataset.del, 1); render(); } };
+  $('fileInput').onchange = (e) => { addFiles(e.target.files); e.target.value = ''; };
+  $('drop').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('fileInput').click(); } });
+  const hasFiles = (e) => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+  window.addEventListener('dragover', (e) => { if (hasFiles(e)) { e.preventDefault(); $('drop').classList.add('over'); } });
+  window.addEventListener('dragleave', (e) => { if (!e.relatedTarget) $('drop').classList.remove('over'); });
+  window.addEventListener('drop', (e) => { if (hasFiles(e)) { e.preventDefault(); $('drop').classList.remove('over'); addFiles(e.dataTransfer.files); } });
+
+  $('btnGo').onclick = async () => {
+    if (busy || !files.length) return; busy = true; $('btnGo').disabled = true;
+    const lvl = document.querySelector('input[name=lvl]:checked').value;
+    results = []; $('results').hidden = false; $('zipRow').hidden = true; $('resList').innerHTML = '';
+    $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    for (const f of files) {
+      const row = document.createElement('div'); row.className = 'res';
+      row.innerHTML = `<div class="minfo"><b title="${esc(f.name)}">${esc(f.name)}</b><span class="st">Comprimiendo…</span></div>`;
+      $('resList').appendChild(row); const st = row.querySelector('.st');
+      try {
+        const r = await Matrix.compress(new Uint8Array(await f.arrayBuffer()), lvl, (i, n) => (st.textContent = `Comprimiendo página ${i} de ${n}…`));
+        const base = f.name.replace(/\.pdf$/i, '');
+        if (r.after < r.before) {
+          results.push({ name: base + '_comprimido.pdf', bytes: r.bytes });
+          row.innerHTML = `<div class="minfo"><b title="${esc(f.name)}">${esc(f.name)}</b><span>${fmtSize(r.before)} → ${fmtSize(r.after)}</span></div><span class="chip">−${Math.round((1 - r.after / r.before) * 100)} %</span><button class="btn"><svg><use href="#i-download"/></svg>Descargar</button>`;
+          row.querySelector('button').onclick = () => Matrix.saveBlob(new Blob([r.bytes], { type: 'application/pdf' }), base + '_comprimido.pdf');
+        } else {
+          row.innerHTML = `<div class="minfo"><b title="${esc(f.name)}">${esc(f.name)}</b><span>${fmtSize(r.before)} · no se pudo reducir${lvl !== 'max' ? '. Prueba con el nivel «Máxima».' : ': ya está optimizado.'}</span></div><span class="chip warn">Sin cambios</span>`;
+        }
+      } catch (err) { console.error(err); row.innerHTML = `<div class="minfo"><b>${esc(f.name)}</b><span>No se pudo procesar este archivo (¿está protegido o dañado?).</span></div><span class="chip warn">Error</span>`; }
+    }
+    $('zipRow').hidden = results.length < 2; busy = false; $('btnGo').disabled = false;
+  };
+  $('btnZip').onclick = async () => {
+    const zip = new JSZip(); results.forEach((r) => zip.file(r.name, r.bytes));
+    Matrix.saveBlob(await zip.generateAsync({ type: 'blob' }), 'pdf_comprimidos.zip');
+  };
+})();
+</script>
+</body></html>
