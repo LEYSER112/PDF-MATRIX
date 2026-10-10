@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#162136">
 <title>PDF Matrix · Multi-herramienta</title>
 <meta name="description" content="Sube un PDF, elige las páginas que necesitas, gira las que estén al revés y descárgalas en un nuevo PDF. Todo ocurre en tu navegador.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📑</text></svg>">
@@ -36,6 +36,11 @@
     <symbol id="i-redo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12"/><path d="M9 7V4h6v3"/></symbol>
     <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></symbol>
+  <symbol id="i-scissors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9"/><path d="m14.5 14.5 5.5 5.5"/><path d="M8.1 8.1 12 12"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-merge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><path d="M11 8h4a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-page-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 11v6M9 14h6"/></symbol>
+  <symbol id="i-crop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></symbol>
   </defs>
 </svg>
 
@@ -46,6 +51,7 @@
       <h1>PDF Matrix</h1>
       <p id="fileInfo">Selecciona, gira y descarga páginas</p>
     </div>
+    <a class="btn ghost" href="index.html"><svg><use href="#i-chev-l"/></svg><span class="t">Inicio</span></a>
   </a>
   <button class="btn ghost" id="btnNew" hidden><svg><use href="#i-upload"/></svg><span class="t">Nuevo PDF</span></button>
   <button class="icon-btn" id="btnTheme" title="Cambiar tema" aria-label="Cambiar tema"><svg><use href="#i-theme"/></svg></button>
@@ -104,6 +110,7 @@
         <button class="btn" id="btnRotR" title="Girar a la derecha las seleccionadas"><svg><use href="#i-rot-r"/></svg><span class="t">Girar der.</span></button>
         <button class="btn" id="btnDup" title="Duplicar las seleccionadas"><svg><use href="#i-copy"/></svg><span class="t">Duplicar</span></button>
         <button class="btn" id="btnDel" title="Eliminar las seleccionadas (Supr)"><svg><use href="#i-trash"/></svg><span class="t">Eliminar</span></button>
+        <button class="btn" id="btnCut" title="Tijera: haz clic entre dos páginas para cortar"><svg><use href="#i-scissors"/></svg><span class="t">Cortar</span></button>
         <div class="menu-wrap">
           <button class="btn" id="btnInsert"><svg><use href="#i-plus"/></svg><span class="t">Insertar</span></button>
           <div class="menu" id="insMenu" hidden>
@@ -121,6 +128,7 @@
         <div class="menu right" id="dlMenu" hidden>
           <button data-dl="one">Un solo PDF</button>
           <button data-dl="pages">Una página por archivo (ZIP)</button>
+          <button data-dl="blocks">Un PDF por bloque (ZIP)</button>
           <button data-dl="ranges">Dividir por rangos (ZIP)…</button>
           <label class="chk"><input type="checkbox" id="askName"> Cambiar nombre antes de descargar</label>
           <small>Sin páginas marcadas se descarga todo el documento.</small>
@@ -129,7 +137,7 @@
     </div>
     <div class="ws"><div class="ws-main">
     <p class="hint">Clic para marcar · Shift + clic para un rango · arrastra una página para reordenarla (si hay varias marcadas, se mueven juntas) · doble clic para verla en grande · Ctrl+Z / Ctrl+Y para deshacer y rehacer.</p>
-    <div class="grid" id="grid"></div>
+    <div class="blocks" id="grid"></div>
     <div class="empty" id="empty" hidden>No quedan páginas. Usa Deshacer o inserta un PDF.</div>
     </div>
     <aside class="side opts" id="opts" aria-label="Herramientas">
@@ -152,10 +160,18 @@
         <div class="inl"><input type="date" id="stDateVal" aria-label="Fecha del sello" disabled><button class="btn sm" id="stToday">Hoy</button></div></div></section>
       <section class="tool"><label class="tool-head"><span class="tool-name"><svg><use href="#i-download"/></svg>Comprimir</span><span class="sw"><input type="checkbox" id="cmpOn"><i></i></span></label><div class="tool-body"><select id="cmp" aria-label="Nivel de compresión"><option value="media">Equilibrada · reduce imágenes</option><option value="alta">Fuerte · reduce más las imágenes</option><option value="max">Máxima · convierte a imagen</option></select>
         <small>Solo se aplica si el resultado pesa menos que el original. «Máxima» convierte las páginas en imagen (el texto ya no se podrá seleccionar).</small></div></section>
-      <section class="tool"><label class="tool-head"><span class="tool-name"><svg><use href="#i-expand"/></svg>Recortar páginas</span><span class="sw"><input type="checkbox" id="cropOn"><i></i></span></label><div class="tool-body">
-        <small>Recorta todas las páginas que vayas a descargar. Usa porcentajes del tamaño original.</small>
-        <div class="crop-grid"><label>Arriba %<input type="number" id="cropTop" min="0" max="45" value="0"></label><label>Derecha %<input type="number" id="cropRight" min="0" max="45" value="0"></label><label>Abajo %<input type="number" id="cropBottom" min="0" max="45" value="0"></label><label>Izquierda %<input type="number" id="cropLeft" min="0" max="45" value="0"></label></div>
-      </div></section>
+      <section class="tool"><label class="tool-head"><span class="tool-name"><svg><use href="#i-crop"/></svg>Recortar páginas</span><span class="sw"><input type="checkbox" id="cropOn"><i></i></span></label><div class="tool-body">
+        <label class="fl" for="cropPages"><b>Páginas que recortar</b><small>Recorta el área seleccionada en páginas específicas, o escribe «todos» para todas. Si lo dejas vacío: las páginas marcadas, o solo la que ves aquí.</small></label>
+        <input type="text" id="cropPages" placeholder="pág. ej., 1, 3, 5-8 o todos" autocomplete="off">
+        <label class="inl"><input type="checkbox" id="cropAuto"> Recortar automáticamente espacios en blanco</label>
+        <div class="crop-head"><b>Selección de área de recorte</b><button class="bbtn" id="cropReset" title="Restablecer el área" aria-label="Restablecer el área"><svg><use href="#i-undo"/></svg></button></div>
+        <div class="crop-nav"><button class="bbtn" id="cropPrev" aria-label="Página anterior"><svg><use href="#i-chev-l"/></svg></button><span id="cropPageLbl">Página 1</span><button class="bbtn" id="cropNext" aria-label="Página siguiente"><svg><use href="#i-chev-r"/></svg></button></div>
+        <div class="crop-box" id="cropBox"><div class="crop-stage" id="cropStage"><canvas id="cropCanvas"></canvas><div class="crop-rect" id="cropRect"><i data-h="nw"></i><i data-h="n"></i><i data-h="ne"></i><i data-h="e"></i><i data-h="se"></i><i data-h="s"></i><i data-h="sw"></i><i data-h="w"></i></div></div></div>
+        <b>Posición y tamaño</b>
+        <div class="crop-grid"><label>Posición X<input type="number" id="cropX" min="0" step="1"></label><label>Posición Y<input type="number" id="cropY" min="0" step="1"></label><label>Ancho<input type="number" id="cropW" min="1" step="1"></label><label>Alto<input type="number" id="cropH" min="1" step="1"></label></div>
+        <small>Medidas en puntos (1 pt = 1/72 de pulgada) sobre la página que ves. El recorte se aplica antes de girar. Puedes dibujar un área nueva arrastrando sobre la página.</small>
+        <button class="btn primary" id="cropApply">Aplicar recorte</button>
+        <button class="btn" id="cropClear">Quitar recorte</button></div></section>
       <section class="tool"><div class="tool-head"><span class="tool-name"><svg><use href="#i-check"/></svg>OCR · Texto escaneado</span></div><div class="tool-body">
         <small>Reconoce texto en las páginas marcadas (o en todo el PDF si no hay selección). El análisis se hace en este navegador.</small>
         <button class="btn sm" id="ocrRun">Reconocer texto</button><small id="ocrStatus" role="status">El idioma inicial es español; el modelo se descarga al usar OCR.</small>
@@ -169,6 +185,10 @@
         <div class="inl"><button class="btn sm" id="sigClear">Borrar firma</button><button class="btn primary sm" id="sigPlace">Colocar firma…</button></div>
         <small>Los campos y la firma se incorporan al PDF descargado como contenido plano.</small>
       </div></section>
+    <section class="tool"><label class="tool-head"><span class="tool-name"><svg><use href="#i-lock"/></svg>Contraseña</span><span class="sw"><input type="checkbox" id="pwOn"><i></i></span></label><div class="tool-body">
+        <input type="password" id="pwVal" autocomplete="new-password" placeholder="Contraseña para el PDF" aria-label="Contraseña para el PDF">
+        <label class="inl"><input type="checkbox" id="pwShow"> Mostrar contraseña</label>
+        <small>Se aplica al descargar y cifra el PDF (AES-256). Si la olvidas no se puede recuperar. Para abrir un PDF protegido, súbelo y te pediremos su contraseña.</small></div></section>
     </aside>
     </div>
   </section>
@@ -177,7 +197,7 @@
 <!-- Visor -->
 <div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-label="Vista de página">
   <div class="viewer-body">
-      <div class="viewer-scroll" id="vScroll"><canvas id="viewerCanvas"></canvas><div class="annotation-box" id="annotBox" hidden></div></div>
+      <div class="viewer-scroll" id="vScroll"><canvas id="viewerCanvas"></canvas><div class="annotation-box" id="annotBox" hidden></div><div class="redaction-box" id="redactionBox" hidden></div></div>
     <div class="viewer-bar">
       <button class="icon-btn" id="vPrev" aria-label="Página anterior"><svg><use href="#i-chev-l"/></svg></button>
       <span class="label" id="vLabel"></span>
@@ -191,6 +211,7 @@
       <button class="icon-btn annot-tool" id="vHighlight" aria-label="Resaltar con el cursor" title="Arrastra para resaltar una zona"><svg><use href="#i-expand"/></svg></button>
       <button class="icon-btn annot-tool" id="vNote" aria-label="Añadir nota" title="Haz clic para añadir una nota"><svg><use href="#i-file"/></svg></button>
       <button class="icon-btn annot-tool" id="vText" aria-label="Añadir texto a la página" title="Haz clic para escribir texto"><svg><use href="#i-plus"/></svg></button>
+      <button class="icon-btn annot-tool" id="vRedact" aria-label="Censurar dato de forma definitiva" title="Arrastra sobre la información sensible"><svg><use href="#i-lock"/></svg></button>
       <button class="icon-btn" id="vClose" aria-label="Cerrar"><svg><use href="#i-close"/></svg></button>
     </div>
   </div>
@@ -205,6 +226,7 @@
     <div class="actions"><button class="btn ghost" id="nameCancel">Cancelar</button><button class="btn primary" id="nameOk">Descargar</button></div>
   </div>
 </div>
+<div class="cutter" id="cutter" hidden><span class="cut-line"></span><div class="cut-btns"><button class="cut-btn" id="cutBtn" title="Cortar aquí" aria-label="Cortar aquí"><svg><use href="#i-scissors"/></svg></button><button class="cut-btn alt" id="blankBtn" title="Insertar una página en blanco aquí" aria-label="Insertar una página en blanco aquí"><svg><use href="#i-page-plus"/></svg></button></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="busy" id="busy"><div><span class="spin"></span><span id="busyText">Procesando…</span></div></div>
 
@@ -218,13 +240,14 @@
   'use strict';
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   const $ = (id) => document.getElementById(id);
-  const el = Object.fromEntries('hero drop fileInput fileAdd workspace grid empty count dlLabel fileInfo btnNew btnAll btnNone btnRotL btnRotR btnDup btnDel btnUndo btnRedo btnDownload btnDlMore dlMenu btnInsert insMenu rangeInput btnRange btnTheme toast busy busyText viewer viewerCanvas annotBox vLabel vPrev vNext vRotL vRotR vSel vSelText vClose vScroll vZin vZout vFit zoomRange zIn zOut mergeView mergeSeg mergeList mergeHint mergeCancel mergeOk nameModal nameInput nameOk nameCancel askName opts optsSum cmp numOn numPos numFmt numStart wmOn wmText wmOp stOn stPreset stText stDate stPos cmpOn fnOn fnPrev fnMsg fnAngle fnNum fnMinus fnPlus fnApply fnReset btnTools stDateVal stToday cropOn cropTop cropRight cropBottom cropLeft ocrRun ocrStatus ocrSearch ocrResults ocrText ocrCopy formOn formScan formStatus formFields sigCanvas sigClear sigPlace vHighlight vNote vText'.split(' ').map((k) => [k, $(k)]));
+  const el = Object.fromEntries('btnCut cutter cutBtn blankBtn pwOn pwVal pwShow hero drop fileInput fileAdd workspace grid empty count dlLabel fileInfo btnNew btnAll btnNone btnRotL btnRotR btnDup btnDel btnUndo btnRedo btnDownload btnDlMore dlMenu btnInsert insMenu rangeInput btnRange btnTheme toast busy busyText viewer viewerCanvas annotBox redactionBox vLabel vPrev vNext vRotL vRotR vSel vSelText vClose vScroll vZin vZout vFit zoomRange zIn zOut mergeView mergeSeg mergeList mergeHint mergeCancel mergeOk nameModal nameInput nameOk nameCancel askName opts optsSum cmp numOn numPos numFmt numStart wmOn wmText wmOp stOn stPreset stText stDate stPos cmpOn fnOn fnPrev fnMsg fnAngle fnNum fnMinus fnPlus fnApply fnReset btnTools stDateVal stToday cropOn cropPages cropAuto cropReset cropPrev cropNext cropPageLbl cropBox cropStage cropCanvas cropRect cropX cropY cropW cropH cropApply cropClear ocrRun ocrStatus ocrSearch ocrResults ocrText ocrCopy formOn formScan formStatus formFields sigCanvas sigClear sigPlace vHighlight vNote vText vRedact'.split(' ').map((k) => [k, $(k)]));
   const MAX_DPR = 2, root = document.documentElement;
   const sources = new Map(), cards = new Map();
   let items = [], itemMap = new Map(), history = [], future = [];
   let seq = 0, thumbWidth = 260, lastClicked = -1, viewerIndex = -1, vz = 1, viewToken = 0;
   let fileName = 'documento', insertTarget = null, queue = Promise.resolve(), toastTimer, zoomTimer, dragIds = null;
-  const annotations = new Map(), formValues = new Map(), formFields = [];
+  const annotations = new Map(), redactions = new Map(), formValues = new Map(), formFields = [];
+  const blkNames = new Map(), collapsed = new Set(); let cutMode = false, cutCand = null, cutHide;
   let annotMode = '', signatureStrokes = [], signatureStroke = null, ocrWorker = null, ocrData = [];
   const uid = () => ++seq, norm = (d) => ((d % 360) + 360) % 360;
   const icon = (id) => `<svg><use href="#${id}"/></svg>`;
@@ -246,7 +269,7 @@
   });
 
   /* ---------- Deshacer / rehacer ---------- */
-  const snap = () => items.map(({ sel, ...r }) => r);
+  const snap = () => items.map(({ sel, ...r }) => ({ ...r, _redactions: (redactions.get(r.id) || []).map((m) => ({ ...m })) }));
   function updateUndo() {
     el.btnUndo.disabled = !history.length; el.btnRedo.disabled = !future.length;
     el.btnUndo.title = history.length ? `Deshacer: ${history[history.length - 1].label} (Ctrl+Z)` : 'Deshacer (Ctrl+Z)';
@@ -255,7 +278,8 @@
   function commit(label) { history.push({ label, state: snap() }); if (history.length > 100) history.shift(); future = []; updateUndo(); }
   function restore(state) {
     const keep = new Set(selected().map((i) => i.id));
-    items = state.map((s) => ({ ...s, sel: keep.has(s.id) }));
+    redactions.clear();
+    items = state.map(({ _redactions, ...s }) => { if (_redactions && _redactions.length) redactions.set(s.id, _redactions); return { ...s, sel: keep.has(s.id) }; });
     syncGrid();
   }
   function undo() { const h = history.pop(); if (!h) return; future.push({ label: h.label, state: snap() }); restore(h.state); toast('Deshecho: ' + h.label); }
@@ -264,11 +288,22 @@
   el.btnRedo.addEventListener('click', redo);
 
   /* ---------- Render de páginas ---------- */
+  // Rectángulo de recorte (fracciones de la página en su orientación base) -> mismo rectángulo tras girar r grados.
+  const rotCrop = (c, r) => (r === 90 ? { x: 1 - (c.y + c.h), y: c.x, w: c.h, h: c.w } : r === 180 ? { x: 1 - (c.x + c.w), y: 1 - (c.y + c.h), w: c.w, h: c.h } : r === 270 ? { x: c.y, y: 1 - (c.x + c.w), w: c.h, h: c.w } : c);
+  // Mismo recorte en coordenadas internas del PDF (para pdf-lib).
+  function cropBoxFor(sp, c) {
+    const cb = sp.getCropBox(), R0 = ((sp.getRotation().angle % 360) + 360) % 360, sw = R0 === 90 || R0 === 270;
+    const Wv = sw ? cb.height : cb.width, Hv = sw ? cb.width : cb.height;
+    const M = (vx, vy) => (R0 === 90 ? [cb.x + vy, cb.y + vx] : R0 === 180 ? [cb.x + cb.width - vx, cb.y + vy] : R0 === 270 ? [cb.x + cb.width - vy, cb.y + cb.height - vx] : [cb.x + vx, cb.y + cb.height - vy]);
+    const p = M(c.x * Wv, c.y * Hv), q = M((c.x + c.w) * Wv, (c.y + c.h) * Hv);
+    return { left: Math.min(p[0], q[0]), right: Math.max(p[0], q[0]), bottom: Math.min(p[1], q[1]), top: Math.max(p[1], q[1]) };
+  }
   async function itemBase(it) {
-    if (it.blank) { const s = it.rot % 180; return { w: s ? it.h : it.w, h: s ? it.w : it.h }; }
-    const page = await sources.get(it.src).doc.getPage(it.n);
-    const rotation = norm(page.rotate + it.rot), vp = page.getViewport({ scale: 1, rotation });
-    return { w: vp.width, h: vp.height, page, rotation };
+    let fw, fh, page = null, rotation = 0;
+    if (it.blank) { const s = it.rot % 180; fw = s ? it.h : it.w; fh = s ? it.w : it.h; }
+    else { page = await sources.get(it.src).doc.getPage(it.n); rotation = norm(page.rotate + it.rot); const vp = page.getViewport({ scale: 1, rotation }); fw = vp.width; fh = vp.height; }
+    const rc = it.crop ? rotCrop(it.crop, norm(it.rot)) : { x: 0, y: 0, w: 1, h: 1 };
+    return { w: fw * rc.w, h: fh * rc.h, fw, fh, rc, page, rotation };
   }
   async function rasterize(it, scale, base) {
     base = base || await itemBase(it);
@@ -277,17 +312,18 @@
     const ctx = c.getContext('2d', { alpha: false });
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
     if (base.page) {
-      const vp = base.page.getViewport({ scale, rotation: base.rotation });
+      const vp = base.page.getViewport({ scale, rotation: base.rotation, offsetX: -base.rc.x * base.fw * scale, offsetY: -base.rc.y * base.fh * scale });
       if (!it.fine) await base.page.render({ canvasContext: ctx, viewport: vp }).promise;
       else {
-        const t = document.createElement('canvas'); t.width = Math.floor(vp.width); t.height = Math.floor(vp.height);
+        const t = document.createElement('canvas'); t.width = c.width; t.height = c.height;
         await base.page.render({ canvasContext: t.getContext('2d', { alpha: false }), viewport: vp }).promise;
         ctx.save(); ctx.translate(c.width / 2, c.height / 2); ctx.rotate((it.fine * Math.PI) / 180); ctx.drawImage(t, -t.width / 2, -t.height / 2); ctx.restore();
       }
     }
     return c;
   }
-  const sigOf = (it) => it.blank ? `b${it.w}x${it.h}|${it.rot}` : `${it.src}:${it.n}|${it.rot}|${it.fine || 0}`;
+  const cropSig = (it) => (it.crop ? [it.crop.x, it.crop.y, it.crop.w, it.crop.h].map((n) => n.toFixed(4)).join(',') : '');
+  const sigOf = (it) => (it.blank ? `b${it.w}x${it.h}|${it.rot}|${cropSig(it)}` : `${it.src}:${it.n}|${it.rot}|${it.fine || 0}|${cropSig(it)}`);
 
   const observer = new IntersectionObserver((es) => es.forEach((e) => {
     if (e.isIntersecting) { observer.unobserve(e.target); renderThumb(+e.target.dataset.id); }
@@ -309,6 +345,9 @@
   }
 
   /* ---------- Cuadrícula ---------- */
+  const blocksOf = (list = items) => { const out = []; list.forEach((it) => { const k = it.blk || 0, last = out[out.length - 1]; if (last && last.blk === k) last.items.push(it); else out.push({ blk: k, items: [it] }); }); return out; };
+  const blkName = (b, bi) => blkNames.get(b.blk) || `${fileName}_bloque_${bi + 1}`;
+  const bhead = (b, bi) => `<header class="bhead"><button class="bbtn" data-b="fold" title="Plegar o desplegar" aria-label="Plegar o desplegar">${icon('i-chev-r')}</button><input class="bname" data-b="name" value="${esc(blkName(b, bi))}" maxlength="80" aria-label="Nombre del bloque"><span class="bmeta">${b.items.length} ${b.items.length === 1 ? 'página' : 'páginas'}</span><button class="bbtn" data-b="eye" title="Ver el bloque" aria-label="Ver el bloque">${icon('i-eye')}</button><span class="bsp"></span>${bi ? `<button class="bbtn" data-b="merge" title="Unir con el bloque anterior" aria-label="Unir con el bloque anterior">${icon('i-merge')}</button>` : ''}<button class="bbtn" data-b="sel" title="Marcar las páginas del bloque" aria-label="Marcar las páginas del bloque">${icon('i-check')}</button><button class="bbtn" data-b="dl" title="Descargar este bloque en PDF" aria-label="Descargar este bloque">${icon('i-download')}</button><button class="bbtn danger" data-b="del" title="Eliminar el bloque" aria-label="Eliminar el bloque">${icon('i-trash')}</button></header>`;
   function makeCard(it) {
     const card = document.createElement('div');
     card.className = 'card'; card.tabIndex = 0; card.draggable = true; card.dataset.id = it.id;
@@ -326,19 +365,26 @@
   function syncGrid() {
     itemMap = new Map(items.map((i) => [i.id, i]));
     for (const [id, cs] of cards) if (!itemMap.has(id)) { observer.unobserve(cs.card); cs.card.remove(); cards.delete(id); }
-    const frag = document.createDocumentFragment();
-    items.forEach((it, i) => {
-      const cs = cards.get(it.id) || makeCard(it);
-      cs.lbl.textContent = it.blank ? `Página ${i + 1} · en blanco` : `Página ${i + 1}`;
-      cs.card.setAttribute('aria-label', cs.lbl.textContent);
-      const bt = [it.rot ? it.rot + '°' : '', it.fine ? (it.fine > 0 ? '+' : '') + it.fine + '°' : ''].filter(Boolean).join(' ');
-      cs.badge.hidden = !bt; cs.badge.textContent = bt;
-      paint(it);
-      const sg = sigOf(it);
-      if (cs.sig !== sg && cs.want !== sg) { cs.want = sg; observer.observe(cs.card); }
-      frag.appendChild(cs.card);
+    const frag = document.createDocumentFragment(), bl = blocksOf(), multi = bl.length > 1; let pos = 0;
+    bl.forEach((b, bi) => {
+      const sec = document.createElement('section');
+      sec.className = 'block' + (multi ? ' multi' : '') + (multi && collapsed.has(b.blk) ? ' collapsed' : ''); sec.dataset.blk = b.blk;
+      if (multi) sec.insertAdjacentHTML('beforeend', bhead(b, bi));
+      const g = document.createElement('div'); g.className = 'bgrid';
+      b.items.forEach((it, k) => {
+        pos++; const n = multi ? k + 1 : pos, cs = cards.get(it.id) || makeCard(it);
+        cs.lbl.textContent = it.blank ? `Página ${n} · en blanco` : `Página ${n}`;
+        cs.card.setAttribute('aria-label', `${cs.lbl.textContent} (posición ${pos})`);
+        const bt = [it.crop ? 'recorte' : '', it.rot ? it.rot + '°' : '', it.fine ? (it.fine > 0 ? '+' : '') + it.fine + '°' : ''].filter(Boolean).join(' ');
+        cs.badge.hidden = !bt; cs.badge.textContent = bt;
+        paint(it);
+        const sg = sigOf(it);
+        if (cs.sig !== sg && cs.want !== sg) { cs.want = sg; observer.observe(cs.card); }
+        g.appendChild(cs.card);
+      });
+      sec.appendChild(g); frag.appendChild(sec);
     });
-    el.grid.appendChild(frag);
+    el.grid.replaceChildren(frag);
     el.empty.hidden = items.length > 0;
     el.fileInfo.textContent = `${fileName}.pdf · ${items.length} ${items.length === 1 ? 'página' : 'páginas'}` + (sources.size > 1 ? ` · ${sources.size} archivos` : '');
     updateCount(); updateUndo();
@@ -350,18 +396,100 @@
     el.count.classList.toggle('none', n === 0);
     el.dlLabel.textContent = n ? `Descargar ${n}` : 'Descargar todo';
     el.btnDownload.disabled = el.btnDlMore.disabled = !items.length;
+    el.btnCut.disabled = !items.length; el.btnCut.title = n ? 'Cortar: crea un bloque con las páginas marcadas' : 'Tijera: haz clic entre dos páginas para cortar';
     [el.btnRotL, el.btnRotR, el.btnDup, el.btnDel].forEach((b) => (b.disabled = n === 0));
     if (viewerIndex >= 0) syncViewerBtn();
-    refreshStraight();
+    refreshStraight(); syncCropRef();
   }
   function flash(ids, scroll = true) {
     ids.forEach((id) => { const cs = cards.get(id); if (cs) { cs.card.classList.add('flash'); setTimeout(() => cs.card.classList.remove('flash'), 1400); } });
     const first = cards.get(ids[0]); if (scroll && first) first.card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
+  /* ---------- Bloques y tijera ---------- */
+  function applyCuts(idxs) {
+    const ix = [...new Set(idxs)].filter((i) => i >= 0 && i < items.length - 1 && (items[i].blk || 0) === (items[i + 1].blk || 0)).sort((a, b) => a - b);
+    if (!ix.length) { toast('Ahí ya hay un corte: son bloques separados.', true); return false; }
+    commit('Cortar');
+    ix.forEach((i) => { const old = items[i].blk || 0, nb = uid(); for (let j = i + 1; j < items.length && (items[j].blk || 0) === old; j++) items[j].blk = nb; });
+    syncGrid(); return true;
+  }
+  function cutSelection() {
+    const idx = [];
+    items.forEach((it, i) => { if (!it.sel) return; if (!items[i - 1] || !items[i - 1].sel) idx.push(i - 1); if (!items[i + 1] || !items[i + 1].sel) idx.push(i); });
+    if (applyCuts(idx)) toast('Bloque creado con las páginas marcadas.');
+  }
+  function setCutMode(v) {
+    cutMode = v; el.grid.classList.toggle('cutting', v); el.btnCut.classList.toggle('active', v);
+    if (v) toast('Modo tijera: haz clic entre dos páginas para cortar. Esc para salir.'); else hideCutter();
+  }
+  el.btnCut.addEventListener('click', () => { if (selected().length) cutSelection(); else setCutMode(!cutMode); });
+  const gapPx = () => { const g = el.grid.querySelector('.bgrid'); return g ? parseFloat(getComputedStyle(g).columnGap) || 16 : 16; };
+  function cutTargetAt(e) {
+    const gap = gapPx(), zone = cutMode ? 40 : 22, card = e.target.closest && e.target.closest('.card'); let t = null;
+    const ok = (i) => i >= 0 && i < items.length - 1 && (items[i].blk || 0) === (items[i + 1].blk || 0);
+    if (card) {
+      const r = card.getBoundingClientRect(), k = items.indexOf(itemMap.get(+card.dataset.id));
+      if (e.clientX > r.right - zone) t = { i: k, x: r.right + gap / 2, r }; else if (e.clientX < r.left + zone) t = { i: k - 1, x: r.left - gap / 2, r };
+    } else {
+      const g = e.target.closest && e.target.closest('.bgrid'); if (!g) return null; let best = null;
+      g.querySelectorAll('.card').forEach((c) => { const r = c.getBoundingClientRect(); if (e.clientY >= r.top && e.clientY <= r.bottom && r.right <= e.clientX + 1 && (!best || r.right > best.r.right)) best = { c, r }; });
+      if (best && e.clientX - best.r.right < gap + 4) t = { i: items.indexOf(itemMap.get(+best.c.dataset.id)), x: best.r.right + gap / 2, r: best.r };
+    }
+    return t && ok(t.i) ? t : null;
+  }
+  function showCutter(t) { clearTimeout(cutHide); cutCand = items[t.i].id; const c = el.cutter; c.hidden = false; c.style.left = t.x + 'px'; c.style.top = t.r.top + 'px'; c.style.height = t.r.height + 'px'; }
+  function hideCutter() { el.cutter.hidden = true; cutCand = null; }
+  el.grid.addEventListener('pointermove', (e) => {
+    if (e.pointerType === 'touch' || dragIds) return;
+    const t = cutTargetAt(e); if (t) showCutter(t); else { clearTimeout(cutHide); cutHide = setTimeout(hideCutter, 140); }
+  });
+  el.grid.addEventListener('pointerleave', () => { clearTimeout(cutHide); cutHide = setTimeout(hideCutter, 220); });
+  el.cutter.addEventListener('pointerenter', () => clearTimeout(cutHide));
+  el.cutter.addEventListener('pointerleave', () => { cutHide = setTimeout(hideCutter, 140); });
+  el.blankBtn.addEventListener('click', () => { const i = items.findIndex((x) => x.id === cutCand); hideCutter(); if (i >= 0) insertBlankAt(i + 1); });
+  el.cutBtn.addEventListener('click', () => { const i = items.findIndex((x) => x.id === cutCand); hideCutter(); if (i >= 0) applyCuts([i]); });
+  el.grid.addEventListener('click', (e) => { if (!cutMode) return; const t = cutTargetAt(e); if (!t) return; e.stopPropagation(); e.preventDefault(); hideCutter(); applyCuts([t.i]); }, true);
+  window.addEventListener('scroll', hideCutter, { passive: true });
+
+  el.grid.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-b]'); if (!b || b.dataset.b === 'name') return;
+    const sec = b.closest('.block'), blk = +sec.dataset.blk, bl = blocksOf(), bi = bl.findIndex((x) => x.blk === blk), cur = bl[bi]; if (!cur) return;
+    const a = b.dataset.b;
+    if (a === 'fold') { sec.classList.toggle('collapsed'); collapsed[sec.classList.contains('collapsed') ? 'add' : 'delete'](blk); }
+    else if (a === 'eye') openViewer(items.indexOf(cur.items[0]));
+    else if (a === 'sel') { const all = cur.items.every((i) => i.sel); cur.items.forEach((i) => { i.sel = !all; paint(i); }); updateCount(); }
+    else if (a === 'dl') downloadBlock(cur, bi);
+    else if (a === 'del') remove(cur.items);
+    else if (a === 'merge') { commit('Unir bloques'); const prev = bl[bi - 1].blk; cur.items.forEach((i) => (i.blk = prev)); syncGrid(); }
+  });
+  el.grid.addEventListener('input', (e) => { const n = e.target.closest('.bname'); if (n) blkNames.set(+n.closest('.block').dataset.blk, n.value); });
+  async function downloadBlock(b, bi) {
+    if (!pwOk()) return;
+    stat.before = stat.after = 0;
+    let name = blkName(b, bi).replace(/\.pdf$/i, '').replace(/[\\/:*?"<>|]+/g, '').trim() || 'bloque';
+    if (el.askName.checked) { const n = await askName(name); if (!n) return; name = n; }
+    const start = Math.max(1, +el.numStart.value || 1), nm = { map: new Map(b.items.map((it, i) => [it.id, start + i])), total: b.items.length + start - 1 };
+    busy(true, 'Generando…');
+    try {
+      saveBlob(new Blob([await buildPdf(b.items, nm)], { type: 'application/pdf' }), name + '.pdf');
+      toast(stat.before ? (stat.after < stat.before ? `Comprimido: ${fmtSize(stat.before)} → ${fmtSize(stat.after)} (−${Math.round((1 - stat.after / stat.before) * 100)} %)` : 'Descarga lista. No se pudo reducir más.') : `Descargado: ${name}.pdf`);
+    } catch (err) { console.error(err); toast('No se pudo generar el PDF del bloque.', true); }
+    finally { busy(false); }
+  }
+
   /* ---------- Acciones sobre páginas ---------- */
   const targets = (it) => (it.sel && selected().length > 1 ? selected() : [it]);
-  function rotate(list, d) { if (!list.length) return; commit('Girar'); list.forEach((i) => (i.rot = norm(i.rot + d))); syncGrid(); }
+  function rotateRedactions(it, d) {
+    const marks = redactions.get(it.id); if (!marks) return;
+    const turn = norm(d);
+    for (const m of marks) {
+      if (turn === 180) { m.x = 1 - m.x - m.w; m.y = 1 - m.y - m.h; }
+      else if (turn === 90) { const x = m.x, y = m.y, w = m.w, h = m.h; m.x = 1 - y - h; m.y = x; m.w = h; m.h = w; }
+      else if (turn === 270) { const x = m.x, y = m.y, w = m.w, h = m.h; m.x = y; m.y = 1 - x - w; m.w = h; m.h = w; }
+    }
+  }
+  function rotate(list, d) { if (!list.length) return; commit('Girar'); list.forEach((i) => { rotateRedactions(i, d); i.rot = norm(i.rot + d); }); syncGrid(); }
   function remove(list) {
     if (!list.length) return; commit('Eliminar'); const s = new Set(list);
     items = items.filter((i) => !s.has(i)); syncGrid();
@@ -376,15 +504,17 @@
     const mv = items.filter((i) => ids.has(i.id)), rest = items.filter((i) => !ids.has(i.id));
     let at = rest.findIndex((i) => i.id === targetId); if (at < 0) return; if (after) at++;
     const next = [...rest.slice(0, at), ...mv, ...rest.slice(at)];
-    if (next.every((x, k) => x === items[k])) return;
-    commit('Reordenar'); items = next; syncGrid(); flash(mv.map((i) => i.id), false);
+    const tb = (itemMap.get(targetId) || {}).blk || 0;
+    if (next.every((x, k) => x === items[k]) && mv.every((i) => (i.blk || 0) === tb)) return;
+    commit('Reordenar'); mv.forEach((i) => (i.blk = tb)); items = next; syncGrid(); flash(mv.map((i) => i.id), false);
   }
   const insertAt = () => { const l = items.map((i) => i.sel).lastIndexOf(true); return l < 0 ? items.length : l + 1; };
-  async function insertBlank() {
-    const at = insertAt(), ref = items[at - 1] || items[at]; let w = 595, h = 842;
+  const insertBlank = () => insertBlankAt(insertAt());
+  async function insertBlankAt(at) {
+    const ref = items[at - 1] || items[at]; let w = 595, h = 842;
     if (ref) { const b = await itemBase({ ...ref, rot: 0 }); w = Math.round(b.w); h = Math.round(b.h); }
     commit('Insertar página en blanco');
-    const it = { id: uid(), blank: true, w, h, rot: 0, sel: false };
+    const it = { id: uid(), blank: true, w, h, rot: 0, sel: false, blk: (items[at - 1] || items[at] || {}).blk };
     items.splice(at, 0, it); syncGrid(); flash([it.id]);
   }
   el.btnRotL.addEventListener('click', () => rotate(selected(), -90));
@@ -467,7 +597,7 @@
     for (const f of files) {
       if (!(f.type === 'application/pdf' || /\.pdf$/i.test(f.name))) { toast(`${f.name} no es un PDF.`, true); continue; }
       try {
-        const bytes = new Uint8Array(await f.arrayBuffer());
+        let bytes = new Uint8Array(await f.arrayBuffer()); bytes = await Matrix.unlock(bytes, f.name); if (!bytes) continue;
         const doc = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
         const s = { id: uid(), name: f.name, bytes, doc }; sources.set(s.id, s); fresh.push(s);
       } catch (err) { toast(err && err.name === 'PasswordException' ? `${f.name}: protegido con contraseña.` : `No se pudo leer ${f.name}.`, true); }
@@ -487,10 +617,10 @@
       }
       const list = plan.flatMap(({ s, pages }) => pages.map((n) => ({ id: uid(), src: s.id, n, rot: 0, sel: false })));
       if (replace) {
-        old.forEach(dropSource); history = []; future = []; cards.forEach((c) => c.card.remove()); cards.clear(); lastClicked = -1;
+        old.forEach(dropSource); history = []; future = []; blkNames.clear(); collapsed.clear(); setCutMode(false); cards.forEach((c) => c.card.remove()); cards.clear(); lastClicked = -1;
         items = list; fileName = plan[0].s.name.replace(/\.pdf$/i, '') + (plan.length > 1 ? '_unido' : '');
         el.hero.hidden = true; el.workspace.hidden = false; el.btnNew.hidden = false; window.scrollTo({ top: 0 });
-      } else { commit('Añadir PDF'); items.splice(at == null ? items.length : at, 0, ...list); }
+      } else { commit('Añadir PDF'); const ia = at == null ? items.length : at, nb = (items[ia - 1] || items[ia] || {}).blk; list.forEach((i) => (i.blk = nb)); items.splice(ia, 0, ...list); }
       syncGrid(); if (!replace) flash(list.map((i) => i.id));
     } finally { busy(false); }
   }
@@ -604,10 +734,12 @@
 
   /* ---------- Descarga ---------- */
   const cmpVal = () => (el.cmpOn.checked ? el.cmp.value : 'none');
+  const pwOk = () => { if (el.pwOn.checked && !el.pwVal.value) { toast('Escribe una contraseña en la herramienta «Contraseña» o desactívala.', true); return false; } return true; };
+  el.pwShow.addEventListener('change', () => { el.pwVal.type = el.pwShow.checked ? 'text' : 'password'; });
   const isoToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
   const fmtDate = (v) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); return m ? `${m[3]}/${m[2]}/${m[1]}` : new Date().toLocaleDateString('es-CO'); };
   function updateOpts() {
-    const n = [cmpVal() !== 'none', el.numOn.checked, el.wmOn.checked, el.stOn.checked, el.cropOn.checked, el.formOn.checked && formValues.size > 0, [...annotations.values()].some((a) => a.length)].filter(Boolean).length;
+    const n = [cmpVal() !== 'none', el.numOn.checked, el.wmOn.checked, el.stOn.checked, el.pwOn.checked && !!el.pwVal.value, el.formOn.checked && formValues.size > 0, [...annotations.values()].some((a) => a.length), [...redactions.values()].some((a) => a.length)].filter(Boolean).length;
     el.optsSum.textContent = n ? `${n} ${n === 1 ? 'activa' : 'activas'} al descargar` : 'Ninguna activa al descargar';
     el.stDateVal.disabled = !el.stDate.checked;
     el.stText.hidden = el.stPreset.value !== 'otro';
@@ -678,7 +810,7 @@
     const { degrees, rgb, StandardFonts } = PDFLib;
     const num = el.numOn.checked, wmT = el.wmOn.checked ? el.wmText.value.trim() : '', st = el.stOn.checked;
     const stT = (el.stPreset.value === 'otro' ? el.stText.value : el.stPreset.value).trim() + (el.stDate.checked ? ' · ' + fmtDate(el.stDateVal.value) : '');
-    if (!num && !wmT && !(st && stT) && !el.cropOn.checked && !formValues.size && ![...annotations.values()].some((a) => a.length)) return;
+    if (!num && !wmT && !(st && stT) && !formValues.size && ![...annotations.values()].some((a) => a.length)) return;
     const font = await doc.embedFont(StandardFonts.Helvetica), bold = await doc.embedFont(StandardFonts.HelveticaBold);
     doc.getPages().forEach((pg, k) => {
       const R = norm(pg.getRotation().angle), w = pg.getWidth(), h = pg.getHeight(), sw = R === 90 || R === 270, W = sw ? h : w, H = sw ? w : h;
@@ -706,19 +838,15 @@
       const pg = doc.getPage(k), it = meta[k], R = norm(pg.getRotation().angle), w = pg.getWidth(), h = pg.getHeight();
       const W = R === 90 || R === 270 ? h : w, H = R === 90 || R === 270 ? w : h;
       const toPdf = (x, y) => R === 90 ? [w - y, x] : R === 180 ? [w - x, h - y] : R === 270 ? [y, h - x] : [x, y];
-      if (el.cropOn.checked) {
-        const mt = Math.min(45, Math.max(0, +el.cropTop.value || 0)) / 100 * H;
-        const mr = Math.min(45, Math.max(0, +el.cropRight.value || 0)) / 100 * W;
-        const mb = Math.min(45, Math.max(0, +el.cropBottom.value || 0)) / 100 * H;
-        const ml = Math.min(45, Math.max(0, +el.cropLeft.value || 0)) / 100 * W;
-        const pts = [[ml, mb], [W - mr, mb], [ml, H - mt], [W - mr, H - mt]].map(([x, y]) => toPdf(x, y));
-        const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
-        if (Math.max(xs) - Math.min(xs) > 20 && Math.max(ys) - Math.min(ys) > 20) pg.setCropBox(Math.min(...xs), Math.min(...ys), Math.max(xs) - Math.min(...xs), Math.max(ys) - Math.min(ys));
+      const censor = redactions.get(it.id) || [];
+      if (censor.length) {
+        for (const r of censor) pg.drawRectangle({ x: r.x * W, y: (1 - r.y - r.h) * H, width: r.w * W, height: r.h * H, color: rgb(0, 0, 0), opacity: 1 });
+        continue;
       }
       if (el.formOn.checked) {
         for (const f of formFields.filter((x) => x.src === it.src && x.n === it.n)) {
           if (!formValues.has(f.key)) continue;
-          const [x1, y1, x2, y2] = f.rect, x = Math.min(x1, x2), y = Math.min(y1, y2), fw = Math.abs(x2 - x1), fh = Math.abs(y2 - y1);
+          const [x1, y1, x2, y2] = f.rect, off = cropOff.get(it.id) || { left: 0, bottom: 0 }, x = Math.min(x1, x2) - off.left, y = Math.min(y1, y2) - off.bottom, fw = Math.abs(x2 - x1), fh = Math.abs(y2 - y1);
           if (fw < 1 || fh < 1) continue;
           pg.drawRectangle({ x, y, width: fw, height: fh, color: rgb(1, 1, 1), opacity: 1 });
           const value = formValues.get(f.key);
@@ -761,20 +889,24 @@
     const { PDFDocument, degrees } = PDFLib, out = await PDFDocument.create(), libs = new Map();
     const qa = [100 / 72, 0.55];
     for (const it of list) {
-      if (cmp === 'max') {
-        const base = await itemBase(it), c = await rasterize(it, Math.min(qa[0], 4000 / Math.max(base.w, base.h)), base);
-        const blob = await new Promise((r) => c.toBlob(r, 'image/jpeg', qa[1]));
-        const img = await out.embedJpg(await blob.arrayBuffer());
+      const censor = redactions.get(it.id) || [];
+      if (cmp === 'max' || censor.length) {
+        const base = await itemBase(it), scale = censor.length ? Math.min(300 / 72, 3600 / Math.max(base.w, base.h)) : Math.min(qa[0], 4000 / Math.max(base.w, base.h)), c = await rasterize(it, scale, base);
+        if (censor.length) { const ctx = c.getContext('2d'); ctx.fillStyle = '#000'; for (const r of censor) ctx.fillRect(Math.floor(r.x * c.width), Math.floor(r.y * c.height), Math.ceil(r.w * c.width), Math.ceil(r.h * c.height)); }
+        const blob = await new Promise((r) => c.toBlob(r, censor.length ? 'image/png' : 'image/jpeg', qa[1]));
+        const img = censor.length ? await out.embedPng(await blob.arrayBuffer()) : await out.embedJpg(await blob.arrayBuffer());
         out.addPage([base.w, base.h]).drawImage(img, { x: 0, y: 0, width: base.w, height: base.h });
         await new Promise((r) => setTimeout(r));
-      } else if (it.blank) out.addPage([it.w, it.h]).setRotation(degrees(it.rot));
+      } else if (it.blank) out.addPage([it.w * (it.crop ? it.crop.w : 1), it.h * (it.crop ? it.crop.h : 1)]).setRotation(degrees(it.rot));
       else {
         let lib = libs.get(it.src);
         if (!lib) { lib = await PDFDocument.load(sources.get(it.src).bytes, { ignoreEncryption: true }); libs.set(it.src, lib); }
-        if (it.fine) {
-          const sp = lib.getPage(it.n - 1), emb = await out.embedPage(sp), w = emb.width, h = emb.height, th = (-it.fine * Math.PI) / 180;
+        if (it.fine || it.crop) {
+          const sp = lib.getPage(it.n - 1), bbox = it.crop ? cropBoxFor(sp, it.crop) : undefined, fine = it.fine || 0;
+          if (bbox) cropOff.set(it.id, { left: bbox.left, bottom: bbox.bottom });
+          const emb = await out.embedPage(sp, bbox), w = emb.width, h = emb.height, th = (-fine * Math.PI) / 180;
           const pg = out.addPage([w, h]);
-          pg.drawPage(emb, { x: w / 2 - ((w / 2) * Math.cos(th) - (h / 2) * Math.sin(th)), y: h / 2 - ((w / 2) * Math.sin(th) + (h / 2) * Math.cos(th)), rotate: degrees(-it.fine) });
+          pg.drawPage(emb, { x: w / 2 - ((w / 2) * Math.cos(th) - (h / 2) * Math.sin(th)), y: h / 2 - ((w / 2) * Math.sin(th) + (h / 2) * Math.cos(th)), rotate: degrees(-fine) });
           pg.setRotation(degrees(norm(sp.getRotation().angle + it.rot)));
         } else {
           const [pg] = await out.copyPages(lib, [it.n - 1]);
@@ -787,19 +919,25 @@
     await overlays(out, list, nm);
     return out.save();
   }
-  const stat = { before: 0, after: 0 };
-  async function buildPdf(list, nm) {
+  const cropOff = new Map(), stat = { before: 0, after: 0 };
+  async function buildPdf0(list, nm) {
     const cmp = cmpVal(), plain = await build1(list, nm, 'none');
     if (cmp === 'none') return plain;
     const c = await build1(list, nm, cmp); stat.before += plain.length; stat.after += Math.min(plain.length, c.length);
     return c.length < plain.length ? c : plain;
+  }
+  async function buildPdf(list, nm) {
+    const bytes = await buildPdf0(list, nm);
+    return el.pwOn.checked && el.pwVal.value ? Matrix.encrypt(bytes, el.pwVal.value) : bytes;
   }
   function saveBlob(blob, name) {
     const u = URL.createObjectURL(blob), a = Object.assign(document.createElement('a'), { href: u, download: name });
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000);
   }
   async function download(mode) {
-    const sel = selected(), list = sel.length ? sel : items; if (!list.length) return;
+    const sel = selected(), list = sel.length ? sel : items; if (!list.length || !pwOk()) return;
+    const redactTargets = mode === 'ranges' ? items : list;
+    if (redactTargets.some((it) => (redactions.get(it.id) || []).length) && !confirm('Las páginas censuradas se aplanarán como imágenes y el contenido cubierto se eliminará del PDF exportado. ¿Continuar?')) return;
     let ranges; stat.before = stat.after = 0;
     if (mode === 'ranges') {
       const txt = prompt('Escribe los rangos separados por | (usa los números de página que ves en pantalla).\nEjemplo: 1-3 | 4-6 | 7-10', '');
@@ -811,7 +949,7 @@
     }
     const baseList = mode === 'ranges' ? items : list, start = Math.max(1, +el.numStart.value || 1);
     const nm = { map: new Map(baseList.map((it, i) => [it.id, start + i])), total: baseList.length + start - 1 };
-    let out = fileName + (mode === 'one' ? (sel.length ? '_seleccion' : '_editado') : mode === 'pages' ? '_paginas' : '_partes'), inner = fileName;
+    let out = fileName + (mode === 'one' ? (sel.length ? '_seleccion' : '_editado') : mode === 'pages' ? '_paginas' : mode === 'blocks' ? '_bloques' : '_partes'), inner = fileName;
     if (el.askName.checked) { const n = await askName(out); if (!n) return; out = n; inner = n; }
     busy(true, 'Generando…');
     try {
@@ -819,9 +957,11 @@
       else {
         const groups = mode === 'pages'
           ? list.map((it, k) => [`${inner}_p${String(k + 1).padStart(3, '0')}`, [it]])
-          : ranges.map(([label, l]) => [`${inner}_${label}`, l]);
+          : mode === 'blocks'
+            ? blocksOf().map((b, bi) => [(el.askName.checked ? `${inner}_${bi + 1}` : blkName(b, bi)).replace(/[\\/:*?"<>|]+/g, ''), b.items])
+            : ranges.map(([label, l]) => [`${inner}_${label}`, l]);
         const zip = new JSZip(); let k = 0;
-        for (const [name, l] of groups) { busy(true, `Generando ${++k} de ${groups.length}…`); zip.file(name + '.pdf', await buildPdf(l, nm)); }
+        for (const [name, l] of groups) { busy(true, `Generando ${++k} de ${groups.length}…`); zip.file(name + '.pdf', await buildPdf(l, mode === 'blocks' ? { map: new Map(l.map((it, i) => [it.id, start + i])), total: l.length + start - 1 } : nm)); }
         saveBlob(await zip.generateAsync({ type: 'blob' }), out + '.zip');
       }
       toast(stat.before ? (stat.after < stat.before ? `Comprimido: ${fmtSize(stat.before)} → ${fmtSize(stat.after)} (−${Math.round((1 - stat.after / stat.before) * 100)} %)` : 'Descarga lista. No se pudo reducir más: ya estaba optimizado.') : 'Descarga lista.');
@@ -861,7 +1001,7 @@
   }
   function applyFine(a) {
     const sel = selected().filter((i) => !i.blank); if (!sel.length) return;
-    commit(a ? 'Enderezar' : 'Quitar enderezado'); sel.forEach((i) => (i.fine = a)); syncGrid();
+    commit(a ? 'Enderezar' : 'Quitar enderezado'); sel.forEach((i) => { if (redactions.has(i.id)) redactions.delete(i.id); i.fine = a; }); syncGrid();
     toast(a ? `Enderezadas ${sel.length} ${sel.length === 1 ? 'página' : 'páginas'} (${a}°).` : 'Enderezado quitado.');
   }
   el.fnAngle.addEventListener('input', () => setAngle(+el.fnAngle.value));
@@ -875,6 +1015,112 @@
   el.stToday.addEventListener('click', () => (el.stDateVal.value = isoToday()));
   el.btnTools.addEventListener('click', () => el.opts.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   updateOpts();
+
+  /* ---------- Recortar páginas (área de recorte) ---------- */
+  const FULL = { x: 0, y: 0, w: 1, h: 1 }, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  let cropRect = { ...FULL }, cropDims = { w: 612, h: 792 }, cropIdx = 0, cropTok = 0, cropRefId = null, cropKey = '', cropSelKey = '';
+  function paintCrop(skip) {
+    const r = cropRect, st = el.cropRect.style;
+    st.left = r.x * 100 + '%'; st.top = r.y * 100 + '%'; st.width = r.w * 100 + '%'; st.height = r.h * 100 + '%';
+    [['cropX', r.x * cropDims.w], ['cropY', r.y * cropDims.h], ['cropW', r.w * cropDims.w], ['cropH', r.h * cropDims.h]].forEach(([id, v]) => { if (id !== skip) el[id].value = Math.round(v); });
+  }
+  async function refreshCrop() {
+    if (!el.cropOn.checked || !items.length) return;
+    cropIdx = clamp(cropIdx, 0, items.length - 1);
+    const it = items[cropIdx], tok = ++cropTok, flat = { ...it, crop: null, rot: 0, fine: 0 };
+    el.cropPageLbl.textContent = `Página ${cropIdx + 1} de ${items.length}`;
+    const key = it.blank ? 'b' + it.id : `${it.src}:${it.n}`, base = await itemBase(flat);
+    if (key !== cropKey) {
+      const c = await rasterize(flat, 560 / base.w, base); if (tok !== cropTok) return;
+      el.cropCanvas.width = c.width; el.cropCanvas.height = c.height; el.cropCanvas.getContext('2d').drawImage(c, 0, 0); cropKey = key;
+    }
+    cropDims = { w: base.w, h: base.h };
+    if (it.id !== cropRefId) { cropRefId = it.id; cropRect = it.crop ? { ...it.crop } : { ...FULL }; if (el.cropAuto.checked) autoRect(); }
+    paintCrop();
+  }
+  function syncCropRef() {
+    if (!el.cropOn.checked) return;
+    const key = selected().map((i) => i.id).join(',');
+    if (key !== cropSelKey) { cropSelKey = key; const f = items.findIndex((i) => i.sel); if (f >= 0) cropIdx = f; }
+    refreshCrop();
+  }
+  // Detecta el contenido de la página (todo lo que no es blanco) y devuelve el rectángulo que lo rodea.
+  async function autoCropFor(it) {
+    const flat = { ...it, crop: null, rot: 0, fine: 0 }, base = await itemBase(flat), c = await rasterize(flat, 520 / Math.max(base.w, base.h), base);
+    const W = c.width, H = c.height, d = c.getContext('2d').getImageData(0, 0, W, H).data, rows = new Uint16Array(H), cols = new Uint16Array(W);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y * W + x) * 4; if (d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11 < 215) { rows[y]++; cols[x]++; } }
+    const tr = Math.max(2, W * 0.004), tc = Math.max(2, H * 0.004);
+    let y0 = 0, y1 = H - 1, x0 = 0, x1 = W - 1;
+    while (y0 < H && rows[y0] < tr) y0++; while (y1 > y0 && rows[y1] < tr) y1--;
+    while (x0 < W && cols[x0] < tc) x0++; while (x1 > x0 && cols[x1] < tc) x1--;
+    if (y0 >= y1 || x0 >= x1) return null;
+    const px = 0.012, x = clamp(x0 / W - px, 0, 1), y = clamp(y0 / H - px, 0, 1), r = clamp((x1 + 1) / W + px, 0, 1), b = clamp((y1 + 1) / H + px, 0, 1);
+    const out = { x, y, w: r - x, h: b - y };
+    return out.w > 0.985 && out.h > 0.985 ? null : out;
+  }
+  async function autoRect() { const it = items[cropIdx]; if (!it) return; const a = await autoCropFor(it); cropRect = a || { ...FULL }; paintCrop(); }
+  function cropTargets() {
+    const txt = el.cropPages.value.trim().toLowerCase();
+    if (!txt) { const s = selected(); return s.length ? s : [items[cropIdx]].filter(Boolean); }
+    if (/^(todos?|todas?|all)$/.test(txt)) return items.slice();
+    const ix = parseRange(txt, items.length);
+    if (!ix) { toast(`Páginas no válidas. Ejemplo: 1, 3, 5-8 o todos (máx. ${items.length}).`, true); return []; }
+    return ix.sort((a, b) => a - b).map((i) => items[i]);
+  }
+  async function applyCrop() {
+    const list = cropTargets(); if (!list.length) return;
+    let res = null;
+    if (el.cropAuto.checked) {
+      busy(true, 'Detectando espacios en blanco…');
+      try { res = []; for (const it of list) res.push(await autoCropFor(it)); } catch (err) { console.error(err); toast('No se pudo detectar el área.', true); return; } finally { busy(false); }
+    }
+    commit('Recortar');
+    list.forEach((it) => redactions.delete(it.id));
+    const full = cropRect.w > 0.995 && cropRect.h > 0.995; let n = 0;
+    list.forEach((it, i) => { const c = res ? res[i] : (full ? null : { ...cropRect }); if (c) { it.crop = c; n++; } else delete it.crop; });
+    syncGrid();
+    toast(n ? `Recorte aplicado a ${n} ${n === 1 ? 'página' : 'páginas'}.` : 'No había nada que recortar.');
+  }
+  function clearCrop() {
+    const list = cropTargets().filter((i) => i.crop); if (!list.length) { toast('Esas páginas no tienen recorte.', true); return; }
+    commit('Quitar recorte'); list.forEach((i) => { redactions.delete(i.id); delete i.crop; }); cropRefId = null; syncGrid();
+    toast(`Recorte quitado de ${list.length} ${list.length === 1 ? 'página' : 'páginas'}.`);
+  }
+  function fromFields(final) {
+    const W = cropDims.w, H = cropDims.h;
+    let w = clamp((+el.cropW.value || 1) / W, 0.02, 1), h = clamp((+el.cropH.value || 1) / H, 0.02, 1);
+    const x = clamp((+el.cropX.value || 0) / W, 0, 1 - w), y = clamp((+el.cropY.value || 0) / H, 0, 1 - h);
+    cropRect = { x, y, w, h }; paintCrop(final ? null : 'all');
+  }
+  ['cropX', 'cropY', 'cropW', 'cropH'].forEach((id) => { el[id].addEventListener('input', () => fromFields(false)); el[id].addEventListener('change', () => fromFields(true)); });
+  el.cropOn.addEventListener('change', () => { cropKey = ''; cropRefId = null; if (el.cropOn.checked) { const f = items.findIndex((i) => i.sel); cropIdx = f >= 0 ? f : cropIdx; refreshCrop(); } });
+  el.cropPrev.addEventListener('click', () => { cropIdx = Math.max(0, cropIdx - 1); refreshCrop(); });
+  el.cropNext.addEventListener('click', () => { cropIdx = Math.min(items.length - 1, cropIdx + 1); refreshCrop(); });
+  el.cropReset.addEventListener('click', () => { cropRect = { ...FULL }; el.cropAuto.checked = false; el.cropBox.classList.remove('auto'); paintCrop(); });
+  el.cropAuto.addEventListener('change', () => { el.cropBox.classList.toggle('auto', el.cropAuto.checked); if (el.cropAuto.checked) autoRect(); });
+  el.cropApply.addEventListener('click', applyCrop);
+  el.cropClear.addEventListener('click', clearCrop);
+  el.cropBox.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || el.cropAuto.checked) return;
+    const hd = e.target.closest('[data-h]'), inRect = e.target.closest('#cropRect'), box = el.cropStage.getBoundingClientRect();
+    const mode = hd ? hd.dataset.h : inRect ? 'move' : 'new', start = { ...cropRect }, x0 = e.clientX, y0 = e.clientY;
+    const fx = (cx) => clamp((cx - box.left) / box.width, 0, 1), fy = (cy) => clamp((cy - box.top) / box.height, 0, 1), MIN = 0.03;
+    e.preventDefault(); el.cropBox.setPointerCapture(e.pointerId);
+    const move = (ev) => {
+      const dx = (ev.clientX - x0) / box.width, dy = (ev.clientY - y0) / box.height; let { x, y, w, h } = start;
+      if (mode === 'new') { const ax = fx(x0), ay = fy(y0), bx = fx(ev.clientX), by = fy(ev.clientY); x = Math.min(ax, bx); y = Math.min(ay, by); w = Math.max(MIN, Math.abs(bx - ax)); h = Math.max(MIN, Math.abs(by - ay)); w = Math.min(w, 1 - x); h = Math.min(h, 1 - y); }
+      else if (mode === 'move') { x = clamp(x + dx, 0, 1 - w); y = clamp(y + dy, 0, 1 - h); }
+      else {
+        if (mode.includes('e')) w = clamp(start.w + dx, MIN, 1 - start.x);
+        if (mode.includes('s')) h = clamp(start.h + dy, MIN, 1 - start.y);
+        if (mode.includes('w')) { const nx = clamp(start.x + dx, 0, start.x + start.w - MIN); w = start.x + start.w - nx; x = nx; }
+        if (mode.includes('n')) { const ny = clamp(start.y + dy, 0, start.y + start.h - MIN); h = start.y + start.h - ny; y = ny; }
+      }
+      cropRect = { x, y, w, h }; paintCrop();
+    };
+    const up = () => { el.cropBox.removeEventListener('pointermove', move); el.cropBox.removeEventListener('pointerup', up); el.cropBox.removeEventListener('pointercancel', up); };
+    el.cropBox.addEventListener('pointermove', move); el.cropBox.addEventListener('pointerup', up); el.cropBox.addEventListener('pointercancel', up);
+  });
 
   /* ---------- Zoom de la cuadrícula ---------- */
   function setCell(v) {
@@ -909,23 +1155,25 @@
     const cv = el.viewerCanvas; cv.width = c.width; cv.height = c.height;
     cv.style.width = Math.floor(base.w * css) + 'px'; cv.style.height = Math.floor(base.h * css) + 'px';
     cv.classList.toggle('zoomed', vz > 1.01); cv.classList.toggle('annotating', ['highlight', 'note', 'text'].includes(annotMode)); cv.classList.toggle('annot-signature', annotMode === 'signature'); el.vFit.textContent = Math.round(vz * 100) + '%';
-    cv.getContext('2d').drawImage(c, 0, 0);
+    const ctx = cv.getContext('2d'); ctx.drawImage(c, 0, 0);
+    for (const r of redactions.get(it.id) || []) { ctx.fillStyle = '#000'; ctx.fillRect(r.x * cv.width, r.y * cv.height, r.w * cv.width, r.h * cv.height); }
   }
   const setAnnotMode = (mode) => {
     annotMode = annotMode === mode ? '' : mode;
-    el.vHighlight.classList.toggle('active', annotMode === 'highlight'); el.vNote.classList.toggle('active', annotMode === 'note'); el.vText.classList.toggle('active', annotMode === 'text');
-    el.viewerCanvas.classList.toggle('annotating', ['highlight', 'note', 'text'].includes(annotMode)); el.viewerCanvas.classList.toggle('annot-signature', annotMode === 'signature');
-    el.annotBox.hidden = true;
+    el.vHighlight.classList.toggle('active', annotMode === 'highlight'); el.vNote.classList.toggle('active', annotMode === 'note'); el.vText.classList.toggle('active', annotMode === 'text'); el.vRedact.classList.toggle('active', annotMode === 'redact');
+    el.viewerCanvas.classList.toggle('annotating', ['highlight', 'note', 'text', 'redact'].includes(annotMode)); el.viewerCanvas.classList.toggle('annot-signature', annotMode === 'signature');
+    el.annotBox.hidden = true; el.redactionBox.hidden = true;
   };
   const normPoint = (e) => { const r = el.viewerCanvas.getBoundingClientRect(); return { x: Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)), y: Math.max(0, Math.min(1, (e.clientY - r.top) / r.height)) }; };
   let markStart = null;
   el.vHighlight.addEventListener('click', () => setAnnotMode('highlight'));
   el.vNote.addEventListener('click', () => setAnnotMode('note'));
   el.vText.addEventListener('click', () => setAnnotMode('text'));
+  el.vRedact.addEventListener('click', () => { setAnnotMode('redact'); if (annotMode === 'redact') toast('Arrastra sobre el dato que quieres ocultar. Se quemará en negro al exportar.'); });
   el.viewerCanvas.addEventListener('pointerdown', (e) => {
     if (!annotMode || viewerIndex < 0) return;
     e.preventDefault(); el.viewerCanvas.setPointerCapture(e.pointerId); const p = normPoint(e);
-    if (annotMode === 'highlight') { markStart = p; el.annotBox.hidden = false; }
+    if (annotMode === 'highlight' || annotMode === 'redact') { markStart = p; (annotMode === 'redact' ? el.redactionBox : el.annotBox).hidden = false; }
     else if (annotMode === 'note' || annotMode === 'text') {
       const type = annotMode, text = prompt(type === 'note' ? 'Escribe una nota breve para esta página:' : 'Escribe el texto que quieres colocar en esta página:');
     if (text && text.trim()) { const it = items[viewerIndex], arr = annotations.get(it.id) || []; arr.push({ type, x: p.x, y: p.y, text: text.trim().slice(0, 180) }); annotations.set(it.id, arr); updateOpts(); toast(type === 'note' ? 'Nota añadida; aparecerá al descargar.' : 'Texto añadido; aparecerá al descargar.'); }
@@ -940,13 +1188,25 @@
     const r = el.viewerCanvas.getBoundingClientRect(), p = normPoint(e), left = Math.min(markStart.x, p.x), top = Math.min(markStart.y, p.y);
     el.annotBox.style.left = `${left * r.width}px`; el.annotBox.style.top = `${top * r.height}px`; el.annotBox.style.width = `${Math.abs(markStart.x - p.x) * r.width}px`; el.annotBox.style.height = `${Math.abs(markStart.y - p.y) * r.height}px`;
   });
+  el.viewerCanvas.addEventListener('pointermove', (e) => {
+    if (annotMode !== 'redact' || !markStart) return;
+    const r = el.viewerCanvas.getBoundingClientRect(), p = normPoint(e), left = Math.min(markStart.x, p.x), top = Math.min(markStart.y, p.y), box = el.redactionBox.style;
+    box.left = (left * r.width) + 'px'; box.top = (top * r.height) + 'px'; box.width = (Math.abs(markStart.x - p.x) * r.width) + 'px'; box.height = (Math.abs(markStart.y - p.y) * r.height) + 'px';
+  });
   el.viewerCanvas.addEventListener('pointerup', (e) => {
     if (annotMode !== 'highlight' || !markStart) return;
     const p = normPoint(e), x = Math.min(markStart.x, p.x), y = Math.min(markStart.y, p.y), w = Math.abs(markStart.x - p.x), h = Math.abs(markStart.y - p.y), it = items[viewerIndex];
     if (w > .008 && h > .008 && it) { const arr = annotations.get(it.id) || []; arr.push({ type: 'highlight', x, y, w, h }); annotations.set(it.id, arr); updateOpts(); toast('Resaltado añadido; aparecerá al descargar.'); }
     markStart = null; el.annotBox.hidden = true;
   });
+  el.viewerCanvas.addEventListener('pointerup', (e) => {
+    if (annotMode !== 'redact' || !markStart) return;
+    const p = normPoint(e), x = Math.min(markStart.x, p.x), y = Math.min(markStart.y, p.y), w = Math.abs(markStart.x - p.x), h = Math.abs(markStart.y - p.y), it = items[viewerIndex];
+    if (w > .008 && h > .008 && it) { commit('Censurar información'); const arr = redactions.get(it.id) || []; arr.push({ x, y, w, h }); redactions.set(it.id, arr); updateOpts(); renderViewer(); toast('Zona censurada. Se eliminará del contenido al exportar.'); }
+    markStart = null; el.redactionBox.hidden = true;
+  });
   el.viewerCanvas.addEventListener('pointercancel', () => { markStart = null; el.annotBox.hidden = true; });
+  el.viewerCanvas.addEventListener('pointercancel', () => { markStart = null; el.redactionBox.hidden = true; });
   el.viewerCanvas.addEventListener('dblclick', () => { if (!annotMode) setVZ(vz > 1.01 ? 1 : 2); });
   el.sigCanvas.addEventListener('pointerdown', (e) => {
     e.preventDefault(); el.sigCanvas.setPointerCapture(e.pointerId); const r = el.sigCanvas.getBoundingClientRect();
@@ -990,6 +1250,7 @@
       if (k === 'escape') (el.nameModal.classList.contains('open') ? el.nameCancel : el.mergeCancel).click();
       if (el.nameModal.classList.contains('open') || field) return;
     }
+    if (cutMode && k === 'escape') { setCutMode(false); return; }
     if (mod && (k === 'z' || k === 'y') && !field && items.length + history.length) { e.preventDefault(); (k === 'y' || e.shiftKey) ? redo() : undo(); return; }
     if (viewerIndex >= 0) {
       if (k === 'escape') closeViewer(); else if (k === 'arrowleft') goto(-1); else if (k === 'arrowright') goto(1);

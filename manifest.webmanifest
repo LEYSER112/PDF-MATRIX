@@ -1,0 +1,11 @@
+{
+  "name": "PDF Matrix",
+  "short_name": "PDF Matrix",
+  "description": "Herramientas privadas para PDF que funcionan en el navegador.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0e1626",
+  "theme_color": "#162136",
+  "icons": [{ "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

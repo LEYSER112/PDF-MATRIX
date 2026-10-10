@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#162136">
 <title>PDF Matrix · Herramientas para PDF</title><meta name="description" content="Comprime, une y edita PDF directamente en tu navegador, sin subir tus archivos.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📑</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -8,6 +8,7 @@
 <header class="topbar">
   <a class="brand" href="index.html" title="Volver al inicio"><div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div><h1>PDF Matrix</h1><p>Herramientas para PDF</p></div></a>
   
+  <button class="btn primary" id="btnInstall" hidden><svg><use href="#i-download"/></svg><span>Instalar app</span></button>
   <button class="icon-btn" id="btnTheme" title="Cambiar tema" aria-label="Cambiar tema"><svg><use href="#i-theme"/></svg></button>
 </header>
 <main>
@@ -17,7 +18,10 @@
     <div class="tools-grid">
       <a class="tool-card" href="comprimir.html"><div class="tool-ico"><svg><use href="#i-compress"/></svg></div><h3>Comprimir PDF</h3><p>Reduce el peso de tus archivos para enviarlos por correo o WhatsApp. Te muestra cuánto se ahorró.</p><span class="go">Abrir →</span></a>
       <a class="tool-card" href="unir.html"><div class="tool-ico"><svg><use href="#i-merge"/></svg></div><h3>Unir PDF</h3><p>Junta varios documentos en uno solo: ordénalos, elige páginas de cada uno y ponle nombre.</p><span class="go">Abrir →</span></a>
-      <a class="tool-card" href="multi.html"><div class="tool-ico"><svg><use href="#i-tools"/></svg></div><h3>Multi-herramienta</h3><p>Editor completo: reordena, recorta, gira, resalta, añade notas, reconoce texto (OCR), rellena formularios y firma tus páginas.</p><span class="go">Abrir →</span></a>
+      <a class="tool-card" href="proteger.html"><div class="tool-ico"><svg><use href="#i-lock"/></svg></div><h3>Contraseña PDF</h3><p>Agrega o quita la contraseña de un PDF. Para quitarla necesitas conocer la contraseña actual.</p><span class="go">Abrir →</span></a>
+      <a class="tool-card" href="escaner.html"><div class="tool-ico"><svg><use href="#i-expand"/></svg></div><h3>Modo escáner</h3><p>Convierte fotos del celular en páginas PDF, mejora contraste, pásalas a blanco y negro y endereza la inclinación.</p><span class="go">Abrir →</span></a>
+      <a class="tool-card" href="convertir.html"><div class="tool-ico"><svg><use href="#i-file"/></svg></div><h3>Imágenes ↔ PDF</h3><p>Crea un PDF con imágenes mezcladas o exporta cada página de un PDF como PNG o JPG.</p><span class="go">Abrir →</span></a>
+      <a class="tool-card" href="multi.html"><div class="tool-ico"><svg><use href="#i-tools"/></svg></div><h3>Multi-herramienta</h3><p>Editor completo: reordena, recorta, gira, marca, protege, añade texto y firma. Incluye OCR y censura irreversible de datos.</p><span class="go">Abrir →</span></a>
     </div>
   </section>
 </main>

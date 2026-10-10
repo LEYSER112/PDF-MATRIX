@@ -1,0 +1,3 @@
+Componentes de terceros incluidos en esta carpeta:
+- qpdf.js / qpdf.wasm: QPDF (Apache 2.0) compilado a WebAssembly por @neslinesli93/qpdf-wasm (ISC).
+  Se usa para agregar, quitar y abrir PDF con contraseña. Se ejecuta en tu navegador.

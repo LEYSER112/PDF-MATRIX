@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#162136">
 <title>Unir PDF · PDF Matrix</title><meta name="description" content="Une varios PDF en uno solo desde tu navegador.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📑</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,7 +39,8 @@
     if (pdfs.length < list.length) Matrix.toast('Se ignoraron archivos que no son PDF.', true);
     for (const f of pdfs) {
       try {
-        const bytes = new Uint8Array(await f.arrayBuffer()), doc = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
+        let bytes = new Uint8Array(await f.arrayBuffer()); bytes = await Matrix.unlock(bytes, f.name); if (!bytes) continue;
+        const doc = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
         const r = { id: ++seq, name: f.name, size: f.size, bytes, pages: doc.numPages, range: '', thumb: null }; rows.push(r);
         doc.getPage(1).then(async (p) => {
           const v = p.getViewport({ scale: 1 }), vp = p.getViewport({ scale: (72 * Math.min(devicePixelRatio || 1, 2)) / v.width });

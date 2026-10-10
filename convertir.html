@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#162136">
+    <title>PDF Matrix · Imágenes y PDF</title>
+    <link rel="stylesheet" href="assets/matrix.css">
+    <style>
+        .convert-page {
+            max-width: 900px;
+            margin: 16px auto
+        }
+
+        .convert-tabs {
+            display: flex;
+            gap: 8px;
+            margin: 16px 0
+        }
+
+        .convert-tabs button.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent)
+        }
+
+        .convert-panel {
+            display: none
+        }
+
+        .convert-panel.active {
+            display: block
+        }
+
+        .convert-list {
+            display: grid;
+            gap: 7px;
+            margin: 14px 0;
+            max-height: 260px;
+            overflow: auto
+        }
+
+        .convert-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--panel-2)
+        }
+
+        .convert-row img {
+            width: 42px;
+            height: 52px;
+            object-fit: cover;
+            border-radius: 5px;
+            background: white
+        }
+
+        .convert-row b {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap
+        }
+
+        .convert-row small {
+            color: var(--muted)
+        }
+
+        .convert-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 12px 0
+        }
+
+        .convert-options label {
+            display: grid;
+            gap: 5px;
+            min-width: 150px;
+            color: var(--muted);
+            font-size: .83rem
+        }
+
+        .convert-status {
+            min-height: 1.5em;
+            color: var(--muted);
+            font-size: .85rem
+        }
+
+        @media(max-width:640px) {
+            .convert-page {
+                padding: 0
+            }
+
+            .convert-tabs {
+                display: grid;
+                grid-template-columns: 1fr 1fr
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="topbar"><a class="brand" href="index.html">
+            <div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            </div>
+            <div>
+                <h1>PDF Matrix</h1>
+                <p>Imágenes ↔ PDF</p>
+            </div>
+                <a class="btn ghost" href="index.html"><svg><use href="#i-chev-l"/></svg><span class="t">Inicio</span></a>
+        </a><button class="icon-btn" id="btnTheme" title="Cambiar tema" aria-label="Cambiar tema"><svg>
+                <use href="#i-theme" />
+            </svg></button></header>
+    <main>
+        <section class="panel convert-page">
+            <h2>Imágenes y PDF</h2>
+            <p class="sub">Puedes mezclar fotos PNG, JPG, WebP y otros formatos que abra el navegador. No es necesario
+                que todas tengan la misma extensión.</p>
+            <div class="convert-tabs"><button class="btn active" data-tab="images">Imágenes → PDF</button><button
+                    class="btn" data-tab="pdf">PDF → imágenes</button></div>
+            <section id="panel-images" class="convert-panel active"><label class="drop" id="imageDrop">
+                    <div class="drop-icon"><svg>
+                            <use href="#i-upload" />
+                        </svg></div><strong>Agrega una o varias imágenes</strong><span>Se conservará el orden de
+                        selección; puedes mezclar formatos</span><input id="imageFiles" type="file" accept="image/*"
+                        multiple hidden>
+                </label>
+                <div id="imageList" class="convert-list"></div>
+                <div class="convert-options"><label>Tamaño de página<select id="paperSize">
+                            <option value="a4">A4</option>
+                            <option value="letter">Carta</option>
+                        </select></label><label>Margen<select id="margin">
+                            <option value="small">Pequeño</option>
+                            <option value="none">Sin margen</option>
+                        </select></label></div><button class="btn primary" id="imagesToPdf" disabled>Crear PDF</button>
+            </section>
+            <section id="panel-pdf" class="convert-panel"><label class="drop" id="pdfDrop">
+                    <div class="drop-icon"><svg>
+                            <use href="#i-upload" />
+                        </svg></div><strong>Elige un PDF</strong><span>Se exportará cada página dentro de un
+                        ZIP</span><input id="pdfFile" type="file" accept="application/pdf,.pdf" hidden>
+                </label>
+                <div class="convert-options"><label>Formato<select id="imageFormat">
+                            <option value="png">PNG · máxima calidad</option>
+                            <option value="jpg">JPG · archivo más ligero</option>
+                        </select></label><label>Resolución <span><output id="dpiOut">150</output> DPI</span><input
+                            id="dpi" type="range" min="72" max="300" step="6" value="150"></label></div>
+                <div id="pdfInfo" class="convert-status"></div><button class="btn primary" id="pdfToImages"
+                    disabled>Exportar páginas como ZIP</button>
+            </section>
+            <p id="convertStatus" class="convert-status" role="status"></p>
+        </section>
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="assets/matrix.js"></script>
+    <script>
+        (() => {
+            Matrix.initTheme(document.getElementById('btnTheme')); pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            const $ = id => document.getElementById(id), images = [], urls = []; let pdf = null, pdfName = 'documento';
+            document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('active', x === b)); document.querySelectorAll('.convert-panel').forEach(x => x.classList.toggle('active', x.id === 'panel-' + b.dataset.tab)) }));
+            function showImages() { const list = $('imageList'); urls.splice(0).forEach(URL.revokeObjectURL.bind(URL)); list.replaceChildren(); images.forEach((f, i) => { const row = document.createElement('div'); row.className = 'convert-row'; const img = document.createElement('img'); img.src = URL.createObjectURL(f); urls.push(img.src); const b = document.createElement('b'); b.textContent = (i + 1) + '. ' + f.name; const small = document.createElement('small'); small.textContent = Math.round(f.size / 1024) + ' KB'; row.append(img, b, small); list.append(row) }); $('imagesToPdf').disabled = !images.length }
+            function addImages(fs) { for (const f of fs) if (f.type.startsWith('image/')) images.push(f); showImages() }
+            $('imageFiles').addEventListener('change', () => { addImages([...$('imageFiles').files]); $('imageFiles').value = '' }); $('imageDrop').addEventListener('click', e => { if (e.target.id !== 'imageFiles') $('imageFiles').click() }); $('imageDrop').addEventListener('dragover', e => { e.preventDefault(); $('imageDrop').classList.add('over') }); $('imageDrop').addEventListener('dragleave', () => $('imageDrop').classList.remove('over')); $('imageDrop').addEventListener('drop', e => { e.preventDefault(); $('imageDrop').classList.remove('over'); addImages([...e.dataTransfer.files]) });
+            $('imagesToPdf').addEventListener('click', async () => { const b = $('imagesToPdf'); b.disabled = true; try { const { PDFDocument } = PDFLib, out = await PDFDocument.create(), dims = $('paperSize').value === 'a4' ? [595.28, 841.89] : [612, 792], margin = $('margin').value === 'none' ? 0 : 24; for (let i = 0; i < images.length; i++) { const f = images[i]; $('convertStatus').textContent = 'Procesando imagen ' + (i + 1) + ' de ' + images.length + '…'; const bmp = await createImageBitmap(f, { imageOrientation: 'from-image' }).catch(() => createImageBitmap(f)), c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height; const x = c.getContext('2d', { alpha: false }); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(bmp, 0, 0); if (bmp.close) bmp.close(); const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .92)), img = await out.embedJpg(await blob.arrayBuffer()), land = c.width > c.height, w = land ? dims[1] : dims[0], h = land ? dims[0] : dims[1], pg = out.addPage([w, h]), k = Math.min((w - 2 * margin) / img.width, (h - 2 * margin) / img.height), iw = img.width * k, ih = img.height * k; pg.drawImage(img, { x: (w - iw) / 2, y: (h - ih) / 2, width: iw, height: ih }) } Matrix.saveBlob(new Blob([await out.save()], { type: 'application/pdf' }), 'imagenes.pdf'); $('convertStatus').textContent = 'PDF descargado.' } catch (e) { $('convertStatus').textContent = 'No se pudo abrir una imagen. Prueba con JPG, PNG o WebP.' } finally { b.disabled = !images.length } });
+            $('pdfDrop').addEventListener('click', e => { if (e.target.id !== 'pdfFile') $('pdfFile').click() }); $('pdfDrop').addEventListener('dragover', e => { e.preventDefault(); $('pdfDrop').classList.add('over') }); $('pdfDrop').addEventListener('dragleave', () => $('pdfDrop').classList.remove('over')); $('pdfDrop').addEventListener('drop', e => { e.preventDefault(); $('pdfDrop').classList.remove('over'); if (e.dataTransfer.files[0]) loadPdf(e.dataTransfer.files[0]) });
+            async function loadPdf(f) { pdf = null; $('pdfToImages').disabled = true; $('pdfInfo').textContent = 'Abriendo ' + f.name + '…'; pdfName = f.name.replace(/\.pdf$/i, ''); try { pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise; $('pdfInfo').textContent = f.name + ' · ' + pdf.numPages + ' páginas'; $('pdfToImages').disabled = false } catch (e) { $('pdfInfo').textContent = 'No se pudo abrir el PDF. Comprueba que no esté protegido con contraseña.' } }
+            $('pdfFile').addEventListener('change', () => { if ($('pdfFile').files[0]) loadPdf($('pdfFile').files[0]); $('pdfFile').value = '' }); $('dpi').addEventListener('input', () => $('dpiOut').value = $('dpi').value);
+            $('pdfToImages').addEventListener('click', async () => { if (!pdf) return; const b = $('pdfToImages'), zip = new JSZip(), format = $('imageFormat').value, scale = +$('dpi').value / 72; b.disabled = true; try { for (let n = 1; n <= pdf.numPages; n++) { $('convertStatus').textContent = 'Renderizando página ' + n + ' de ' + pdf.numPages + '…'; const page = await pdf.getPage(n), vp = page.getViewport({ scale }), c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height); const x = c.getContext('2d', { alpha: format === 'png' }); if (format === 'jpg') { x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height) } await page.render({ canvasContext: x, viewport: vp }).promise; const mime = format === 'png' ? 'image/png' : 'image/jpeg', blob = await new Promise(r => c.toBlob(r, mime, .9)); zip.file(pdfName + '_pagina_' + String(n).padStart(3, '0') + '.' + format, blob); await new Promise(r => setTimeout(r)) } Matrix.saveBlob(await zip.generateAsync({ type: 'blob' }), pdfName + '_imagenes.zip'); $('convertStatus').textContent = 'ZIP de imágenes descargado.' } catch (e) { $('convertStatus').textContent = 'No se pudo convertir el PDF.' } finally { b.disabled = !pdf } });
+        })();
+    </script>
+</body>
+
+</html>

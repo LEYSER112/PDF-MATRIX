@@ -105,5 +105,78 @@ window.Matrix = (() => {
     }
     return { bytes: best, before: bytes.length, after: best.length };
   }
-  return { esc, fmtSize, isPdf, toast, parseRange, saveBlob, initTheme, shrinkImages, compress };
+  /* ---- Contraseñas (QPDF en WebAssembly, local en el navegador) ---- */
+  let qpdfP = null;
+  const loadQpdf = () => qpdfP || (qpdfP = new Promise((res, rej) => {
+    if (window.__qpdf) return res(window.__qpdf);
+    const s = document.createElement('script'); s.src = 'assets/qpdf.js';
+    s.onload = () => { window.__qpdf = window.Module; res(window.__qpdf); };
+    s.onerror = () => { qpdfP = null; rej(new Error('qpdf')); }; document.head.appendChild(s);
+  }));
+  async function qpdfRun(args, bytes) {
+    const make = await loadQpdf(), log = [];
+    const q = await make({ locateFile: () => new URL('assets/qpdf.wasm', document.baseURI).href, noInitialRun: true, print: (t) => log.push(t), printErr: (t) => log.push(t) });
+    q.FS.writeFile('/in.pdf', bytes); let code = 0;
+    try { code = q.callMain(args); } catch (e) { code = e && typeof e.status === 'number' ? e.status : 2; }
+    let out = null; try { out = q.FS.readFile('/out.pdf'); } catch (e) {}
+    return { code, out, log: log.join(' ') };
+  }
+  const latin = new TextDecoder('latin1');
+  function looksEncrypted(bytes) {
+    const n = bytes.length, a = latin.decode(bytes.subarray(0, Math.min(n, 4096))), b = n > 4096 ? latin.decode(bytes.subarray(n - 4096)) : '';
+    return /\/Encrypt\b/.test(a) || /\/Encrypt\b/.test(b);
+  }
+  async function decrypt(bytes, pw) {
+    const r = await qpdfRun(['--password=' + pw, '--decrypt', '/in.pdf', '/out.pdf'], bytes);
+    if (r.out && r.code !== 2) return { ok: true, bytes: r.out };
+    return { ok: false, reason: r.code === 2 || /password/i.test(r.log) ? 'password' : 'error' };
+  }
+  async function encrypt(bytes, pw) {
+    const r = await qpdfRun(['--encrypt', pw, pw, '256', '--', '/in.pdf', '/out.pdf'], bytes);
+    if (!r.out || r.code === 2) throw new Error('No se pudo proteger el PDF');
+    return r.out;
+  }
+  function askPassword(name, wrong) {
+    return new Promise((resolve) => {
+      const m = document.createElement('div'); m.className = 'modal open'; m.style.zIndex = 120; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true');
+      m.innerHTML = `<div class="sheet"><h3>Documento protegido</h3><p class="sub">«${esc(name)}» está protegido con contraseña. Escríbela para abrirlo.</p><input class="name" type="password" id="mxPw" autocomplete="off" aria-label="Contraseña" style="margin-bottom:8px"><label style="display:flex;gap:8px;align-items:center;color:var(--muted);font-size:.85rem;margin-bottom:12px"><input type="checkbox" id="mxShow"> Mostrar contraseña</label><p class="sub error" ${wrong ? '' : 'hidden'}>Contraseña incorrecta. Inténtalo de nuevo.</p><div class="actions"><button class="btn ghost" id="mxNo">Cancelar</button><button class="btn primary" id="mxOk">Abrir</button></div></div>`;
+      document.body.appendChild(m);
+      const inp = m.querySelector('#mxPw'), done = (v) => { m.remove(); resolve(v); };
+      m.querySelector('#mxShow').onchange = (e) => { inp.type = e.target.checked ? 'text' : 'password'; };
+      m.querySelector('#mxNo').onclick = () => done(null);
+      m.querySelector('#mxOk').onclick = () => done(inp.value);
+      inp.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); done(inp.value); } else if (e.key === 'Escape') done(null); };
+      setTimeout(() => inp.focus(), 30);
+    });
+  }
+  // Devuelve los bytes sin contraseña (pide la clave si hace falta) o null si se cancela.
+  async function unlock(bytes, name) {
+    if (!looksEncrypted(bytes)) return bytes;
+    let pw = '', wrong = false;
+    for (;;) {
+      let r; try { r = await decrypt(bytes, pw); } catch (e) { toast('No se pudo cargar el módulo de contraseñas. Abre la página desde GitHub Pages (con internet no hace falta nada más).', true); return null; }
+      if (r.ok) { if (pw) toast('Documento desbloqueado. Al descargar saldrá sin contraseña.'); return r.bytes; }
+      if (r.reason !== 'password') { toast(`No se pudo abrir «${name}».`, true); return null; }
+      pw = await askPassword(name, wrong); if (pw === null) return null; wrong = true;
+    }
+  }
+  return { esc, fmtSize, isPdf, toast, parseRange, saveBlob, initTheme, shrinkImages, compress, looksEncrypted, decrypt, encrypt, unlock };
 })();
+
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => navigator.serviceWorker.register(new URL('sw.js', document.baseURI).href).catch(() => {}));
+}
+let pdfMatrixInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault(); pdfMatrixInstallPrompt = event;
+  const button = document.getElementById('btnInstall'); if (button) button.hidden = false;
+});
+window.addEventListener('appinstalled', () => {
+  pdfMatrixInstallPrompt = null; const button = document.getElementById('btnInstall'); if (button) button.hidden = true;
+});
+document.addEventListener('click', async (event) => {
+  if (!event.target.closest('#btnInstall')) return;
+  if (!pdfMatrixInstallPrompt) return;
+  await pdfMatrixInstallPrompt.prompt(); pdfMatrixInstallPrompt = null;
+  const button = document.getElementById('btnInstall'); if (button) button.hidden = true;
+});

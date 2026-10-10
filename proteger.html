@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#162136">
+<title>Contraseña PDF · PDF Matrix</title><meta name="description" content="Agrega o quita la contraseña de un PDF en tu navegador.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📑</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/matrix.css"></head><body>
+<header class="topbar">
+  <a class="brand" href="index.html" title="Volver al inicio"><div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div><h1>PDF Matrix</h1><p>Contraseña PDF</p></div></a>
+  <a class="btn ghost" href="index.html"><svg><use href="#i-chev-l"/></svg><span class="t">Inicio</span></a>
+  <button class="icon-btn" id="btnTheme" title="Cambiar tema" aria-label="Cambiar tema"><svg><use href="#i-theme"/></svg></button>
+</header>
+<main><div class="page">
+  <section class="panel">
+    <h2>Contraseña del PDF</h2>
+    <p class="sub">Agrega una contraseña a un PDF o quítasela si conoces la actual. Todo ocurre en tu navegador: el archivo no se sube a ningún servidor.</p>
+    <label class="drop" id="drop" tabindex="0"><div class="drop-icon"><svg><use href="#i-lock"/></svg></div><strong>Arrastra tu PDF aquí o haz clic para elegirlo</strong><span>Un archivo a la vez</span><input type="file" id="fileInput" accept="application/pdf,.pdf" hidden></label>
+  </section>
+  <section class="panel" id="work" hidden>
+    <div class="mrow" style="cursor:default"><span class="mnum">1</span><div class="minfo"><b id="fName"></b><span id="fInfo"></span></div><span class="chip" id="fChip"></span><button class="icon-btn" id="fDel" aria-label="Quitar archivo"><svg><use href="#i-close"/></svg></button></div>
+    <div class="seg" id="seg" style="margin-top:14px"><button data-mode="add" class="on">Agregar contraseña</button><button data-mode="remove">Quitar contraseña</button></div>
+    <div id="addBox">
+      <div class="field"><label for="pw1"><b>Nueva contraseña</b></label><input type="password" id="pw1" autocomplete="new-password"></div>
+      <div class="field"><label for="pw2"><b>Repite la contraseña</b></label><input type="password" id="pw2" autocomplete="new-password"></div>
+      <p class="sub" id="addHint"></p>
+    </div>
+    <div id="remBox" hidden>
+      <div class="field"><label for="curPw"><b>Contraseña actual</b></label><input type="password" id="curPw" autocomplete="off"></div>
+      <p class="sub" id="remHint"></p>
+    </div>
+    <label class="inl" style="display:flex;gap:8px;align-items:center;color:var(--muted);font-size:.88rem"><input type="checkbox" id="show"> Mostrar contraseñas</label>
+    <div class="field"><label for="outName"><b>Nombre del archivo</b></label><input type="text" id="outName" maxlength="120" autocomplete="off"></div>
+    <p class="sub error" id="msg" hidden></p>
+    <div class="actions"><button class="btn primary" id="btnGo"><svg><use href="#i-download"/></svg><span id="goText">Proteger y descargar</span></button></div>
+  </section>
+</div></main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="assets/matrix.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id), { fmtSize } = Matrix;
+  Matrix.initTheme($('btnTheme'));
+  let file = null, bytes = null, encrypted = false, mode = 'add', busy = false;
+  const base = () => file.name.replace(/\.pdf$/i, '');
+  const err = (t) => { $('msg').hidden = !t; $('msg').textContent = t || ''; };
+  function render() {
+    $('work').hidden = !file; if (!file) return;
+    $('fName').textContent = file.name; $('fInfo').textContent = fmtSize(file.size);
+    $('fChip').textContent = encrypted ? 'Protegido' : 'Sin contraseña'; $('fChip').className = 'chip' + (encrypted ? '' : ' warn');
+    $('seg').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.mode === mode));
+    $('addBox').hidden = mode !== 'add'; $('remBox').hidden = mode !== 'remove';
+    $('outName').value = base() + (mode === 'add' ? '_protegido' : '_sin_contraseña');
+    $('goText').textContent = mode === 'add' ? 'Proteger y descargar' : 'Quitar contraseña y descargar';
+    $('addHint').textContent = encrypted ? 'Este archivo ya tiene contraseña: te pediremos la actual y luego se le pondrá la nueva.' : 'Si la olvidas, no se puede recuperar. Se cifra con AES-256.';
+    $('remHint').textContent = encrypted ? 'Escribe la contraseña actual del documento.' : 'Este PDF no tiene contraseña: no hay nada que quitar.';
+    $('btnGo').disabled = busy || (mode === 'remove' && !encrypted); err('');
+  }
+  async function setFile(f) {
+    if (!f) return; if (!Matrix.isPdf(f)) { Matrix.toast('Ese archivo no es un PDF.', true); return; }
+    file = f; bytes = new Uint8Array(await f.arrayBuffer()); encrypted = Matrix.looksEncrypted(bytes); mode = encrypted ? 'remove' : 'add';
+    ['pw1', 'pw2', 'curPw'].forEach((i) => ($(i).value = '')); render();
+  }
+  $('fileInput').onchange = (e) => { setFile(e.target.files[0]); e.target.value = ''; };
+  $('drop').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('fileInput').click(); } });
+  const hasFiles = (e) => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+  window.addEventListener('dragover', (e) => { if (hasFiles(e)) { e.preventDefault(); $('drop').classList.add('over'); } });
+  window.addEventListener('dragleave', (e) => { if (!e.relatedTarget) $('drop').classList.remove('over'); });
+  window.addEventListener('drop', (e) => { if (hasFiles(e)) { e.preventDefault(); $('drop').classList.remove('over'); setFile(e.dataTransfer.files[0]); } });
+  $('fDel').onclick = () => { file = bytes = null; render(); };
+  $('seg').onclick = (e) => { const b = e.target.closest('[data-mode]'); if (b) { mode = b.dataset.mode; render(); } };
+  $('show').onchange = (e) => ['pw1', 'pw2', 'curPw'].forEach((i) => ($(i).type = e.target.checked ? 'text' : 'password'));
+  $('btnGo').onclick = async () => {
+    if (busy || !file) return; err(''); busy = true; $('btnGo').disabled = true;
+    try {
+      let out;
+      if (mode === 'add') {
+        const p1 = $('pw1').value, p2 = $('pw2').value;
+        if (!p1) { err('Escribe la nueva contraseña.'); return; }
+        if (p1 !== p2) { err('Las contraseñas no coinciden.'); return; }
+        const src = encrypted ? await Matrix.unlock(bytes, file.name) : bytes; if (!src) return;
+        out = await Matrix.encrypt(src, p1);
+      } else {
+        const r = await Matrix.decrypt(bytes, $('curPw').value);
+        if (!r.ok) { err(r.reason === 'password' ? 'Contraseña incorrecta.' : 'No se pudo abrir este PDF.'); return; }
+        out = r.bytes;
+      }
+      const name = $('outName').value.replace(/\.pdf$/i, '').replace(/[\\/:*?"<>|]+/g, '').trim() || 'documento';
+      Matrix.saveBlob(new Blob([out], { type: 'application/pdf' }), name + '.pdf');
+      Matrix.toast(mode === 'add' ? 'PDF protegido y descargado.' : 'Contraseña quitada. PDF descargado.');
+    } catch (e) { console.error(e); Matrix.toast('No se pudo completar. Abre la página desde GitHub Pages y revisa tu conexión.', true); }
+    finally { busy = false; render(); }
+  };
+})();
+</script>
+</body></html>

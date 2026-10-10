@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#162136">
 <title>Comprimir PDF · PDF Matrix</title><meta name="description" content="Reduce el peso de tus PDF en el navegador.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📑</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,7 +67,9 @@
       row.innerHTML = `<div class="minfo"><b title="${esc(f.name)}">${esc(f.name)}</b><span class="st">Comprimiendo…</span></div>`;
       $('resList').appendChild(row); const st = row.querySelector('.st');
       try {
-        const r = await Matrix.compress(new Uint8Array(await f.arrayBuffer()), lvl, (i, n) => (st.textContent = `Comprimiendo página ${i} de ${n}…`));
+        const raw = await Matrix.unlock(new Uint8Array(await f.arrayBuffer()), f.name);
+        if (!raw) { row.innerHTML = `<div class="minfo"><b>${esc(f.name)}</b><span>No se abrió: faltó la contraseña.</span></div><span class="chip warn">Omitido</span>`; continue; }
+        const r = await Matrix.compress(raw, lvl, (i, n) => (st.textContent = `Comprimiendo página ${i} de ${n}…`));
         const base = f.name.replace(/\.pdf$/i, '');
         if (r.after < r.before) {
           results.push({ name: base + '_comprimido.pdf', bytes: r.bytes });

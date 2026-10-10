@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#162136" />
+    <title>PDF Matrix · Modo escáner</title>
+    <link rel="stylesheet" href="assets/matrix.css" />
+    <style>
+        .scan-page {
+            max-width: 980px;
+            margin: 16px auto;
+        }
+
+        .scan-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 300px;
+            gap: 16px;
+            align-items: start;
+        }
+
+        .scan-preview {
+            min-height: 300px;
+            display: grid;
+            place-items: center;
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 14px;
+        }
+
+        .scan-preview canvas {
+            display: block;
+            max-width: 100%;
+            max-height: 65vh;
+            background: #fff;
+            box-shadow: var(--shadow);
+        }
+
+        .scan-controls {
+            display: grid;
+            gap: 12px;
+        }
+
+        .scan-controls label {
+            display: grid;
+            gap: 6px;
+        }
+
+        .scan-controls input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent);
+        }
+
+        .scan-files {
+            display: grid;
+            gap: 6px;
+            max-height: 180px;
+            overflow: auto;
+        }
+
+        .scan-file {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            background: var(--panel-2);
+            font-size: 0.82rem;
+        }
+
+        .scan-file b {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .scan-empty {
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .scan-status {
+            color: var(--muted);
+            font-size: 0.84rem;
+            min-height: 1.4em;
+        }
+
+        @media (max-width: 800px) {
+            .scan-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .scan-controls {
+                grid-row: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="topbar">
+        <a class="brand" href="index.html">
+            <div class="brand-mark" aria-hidden="true">
+                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            </div>
+            <div>
+                <h1>PDF Matrix</h1>
+                <p>Modo escáner</p>
+            </div>
+                <a class="btn ghost" href="index.html"><svg><use href="#i-chev-l"/></svg><span class="t">Inicio</span></a>
+        </a><button class="icon-btn" id="btnTheme" title="Cambiar tema" aria-label="Cambiar tema">
+            <svg>
+                <use href="#i-theme" />
+            </svg>
+        </button>
+    </header>
+    <main>
+        <section class="panel scan-page">
+            <h2>Convierte fotos en un PDF escaneado</h2>
+            <p class="sub">
+                Puedes mezclar fotos JPG, PNG, WebP y otros formatos que abra el
+                navegador. Ajusta contraste, blanco y negro y enderezado automático.
+                Todo se procesa en este dispositivo.
+            </p>
+            <label class="drop" id="scanDrop">
+                <div class="drop-icon">
+                    <svg>
+                        <use href="#i-upload" />
+                    </svg>
+                </div>
+                <strong>Agrega fotos del documento</strong><span>Selecciona varias o arrástralas aquí</span><input
+                    id="scanFiles" type="file" accept="image/*" multiple hidden />
+            </label>
+            <div class="scan-layout" style="margin-top: 16px">
+                <div>
+                    <div class="scan-preview" id="scanPreview">
+                        <p class="scan-empty">La vista previa aparecerá aquí.</p>
+                    </div>
+                    <div id="scanList" class="scan-files" style="margin-top: 10px"></div>
+                </div>
+                <aside class="panel scan-controls" style="margin: 0; padding: 16px">
+                    <label>Modo de imagen<select id="scanMode">
+                            <option value="color">Color</option>
+                            <option value="gray">Escala de grises</option>
+                            <option value="bw">Blanco y negro</option>
+                        </select></label>
+                    <label>Contraste <span><output id="contrastOut">25</output>%</span><input id="contrast" type="range"
+                            min="0" max="100" value="25" /></label><label id="thresholdRow">Umbral blanco/negro
+                        <span><output id="thresholdOut">168</output></span><input id="threshold" type="range" min="70"
+                            max="230" value="168" /></label>
+                    <label class="inl"><input id="autoDeskew" type="checkbox" checked />Enderezar
+                        automáticamente</label><label>Tamaño de página<select id="paper">
+                            <option value="a4">A4</option>
+                            <option value="letter">Carta</option>
+                            <option value="image">Tamaño de la foto</option>
+                        </select></label>
+                    <button id="scanDownload" class="btn primary" disabled>
+                        Procesar y descargar PDF
+                    </button>
+                    <div id="scanStatus" class="scan-status" role="status"></div>
+                </aside>
+            </div>
+        </section>
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="assets/matrix.js"></script>
+    <script>
+        (() => {
+            Matrix.initTheme(document.getElementById("btnTheme"));
+            const $ = (id) => document.getElementById(id),
+                files = [],
+                cache = new Map(),
+                inp = $("scanFiles"),
+                drop = $("scanDrop"),
+                preview = $("scanPreview"),
+                list = $("scanList"),
+                status = $("scanStatus");
+            function updateList() {
+                list.replaceChildren();
+                files.forEach((f, i) => {
+                    const row = document.createElement("div");
+                    row.className = "scan-file";
+                    const b = document.createElement("b");
+                    b.textContent = i + 1 + ". " + f.name;
+                    b.title = f.name;
+                    const x = document.createElement("button");
+                    x.className = "icon-btn";
+                    x.style.width = "30px";
+                    x.style.height = "30px";
+                    x.textContent = "×";
+                    x.dataset.remove = i;
+                    x.setAttribute("aria-label", "Quitar foto " + (i + 1));
+                    row.append(b, x);
+                    list.append(row);
+                });
+                $("scanDownload").disabled = !files.length;
+            }
+            async function imageCanvas(file, max) {
+                max = max || 1800;
+                let bmp;
+                try {
+                    bmp = await createImageBitmap(file, {
+                        imageOrientation: "from-image",
+                    });
+                } catch {
+                    bmp = await createImageBitmap(file);
+                }
+                const k = Math.min(1, max / Math.max(bmp.width, bmp.height)),
+                    c = document.createElement("canvas");
+                c.width = Math.max(1, Math.round(bmp.width * k));
+                c.height = Math.max(1, Math.round(bmp.height * k));
+                c.getContext("2d", { alpha: false }).drawImage(
+                    bmp,
+                    0,
+                    0,
+                    c.width,
+                    c.height,
+                );
+                if (bmp.close) bmp.close();
+                return c;
+            }
+            function processCanvas(src) {
+                const mode = $("scanMode").value,
+                    c = document.createElement("canvas");
+                c.width = src.width;
+                c.height = src.height;
+                const x = c.getContext("2d", { willReadFrequently: true });
+                x.drawImage(src, 0, 0);
+                const im = x.getImageData(0, 0, c.width, c.height),
+                    d = im.data,
+                    f = 1 + (+$("contrast").value / 100) * 1.7,
+                    t = +$("threshold").value;
+                for (let i = 0; i < d.length; i += 4) {
+                    let v =
+                        (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2] - 128) * f +
+                        128;
+                    v = Math.max(0, Math.min(255, v));
+                    if (mode === "bw") v = v >= t ? 255 : 0;
+                    if (mode === "gray" || mode === "bw")
+                        d[i] = d[i + 1] = d[i + 2] = v;
+                }
+                x.putImageData(im, 0, 0);
+                return c;
+            }
+            function skewAngle(c) {
+                const s = document.createElement("canvas"),
+                    k = Math.min(1, 600 / Math.max(c.width, c.height));
+                s.width = Math.max(1, Math.round(c.width * k));
+                s.height = Math.max(1, Math.round(c.height * k));
+                const x = s.getContext("2d", { willReadFrequently: true });
+                x.drawImage(c, 0, 0, s.width, s.height);
+                const d = x.getImageData(0, 0, s.width, s.height).data,
+                    pts = [],
+                    step = Math.max(1, Math.floor(Math.max(s.width, s.height) / 500));
+                for (let y = 8; y < s.height - 8; y += step)
+                    for (let xx = 8; xx < s.width - 8; xx += step) {
+                        const i = (y * s.width + xx) * 4;
+                        if ((d[i] + d[i + 1] + d[i + 2]) / 3 < 165)
+                            pts.push([xx - s.width / 2, y - s.height / 2]);
+                    }
+                if (pts.length < 120 || pts.length > s.width * s.height * 0.32)
+                    return 0;
+                let best = 0,
+                    score = -1;
+                for (let a = -7; a <= 7.01; a += 0.5) {
+                    const r = (a * Math.PI) / 180,
+                        co = Math.cos(r),
+                        si = Math.sin(r),
+                        bins = new Uint16Array(s.height + 40);
+                    for (const p of pts) {
+                        const yy = Math.round(-si * p[0] + co * p[1] + s.height / 2 + 20);
+                        if (yy >= 0 && yy < bins.length) bins[yy]++;
+                    }
+                    let sum = 0;
+                    for (const n of bins) sum += n * n;
+                    if (sum > score) {
+                        score = sum;
+                        best = a;
+                    }
+                }
+                return Math.abs(best) < 0.35 ? 0 : best;
+            }
+            function deskew(c, a) {
+                if (!a) return c;
+                const out = document.createElement("canvas"),
+                    rad = (Math.abs(a) * Math.PI) / 180,
+                    w = Math.ceil(c.width * Math.cos(rad) + c.height * Math.sin(rad)),
+                    h = Math.ceil(c.height * Math.cos(rad) + c.width * Math.sin(rad));
+                out.width = w;
+                out.height = h;
+                const x = out.getContext("2d", { alpha: false });
+                x.fillStyle = "#fff";
+                x.fillRect(0, 0, w, h);
+                x.translate(w / 2, h / 2);
+                x.rotate((-a * Math.PI) / 180);
+                x.drawImage(c, -c.width / 2, -c.height / 2);
+                return out;
+            }
+            async function render(index) {
+                if (!files.length) return;
+                index = Math.max(0, Math.min(files.length - 1, index || 0));
+                try {
+                    let src = cache.get(files[index]);
+                    if (!src) {
+                        src = await imageCanvas(files[index]);
+                        cache.set(files[index], src);
+                    }
+                    let c = processCanvas(src),
+                        a = $("autoDeskew").checked ? skewAngle(c) : 0;
+                    c = deskew(c, a);
+                    preview.replaceChildren(c);
+                    c.style.maxWidth = "100%";
+                    c.style.maxHeight = "65vh";
+                    status.textContent =
+                        "Foto " +
+                        (index + 1) +
+                        " de " +
+                        files.length +
+                        (a ? " · enderezado " + (-a).toFixed(1) + "°" : "");
+                } catch (e) {
+                    status.textContent =
+                        "No se pudo abrir «" +
+                        files[index].name +
+                        "». Prueba JPG, PNG o WebP.";
+                }
+            }
+            function add(fs) {
+                for (const f of fs) if (f.type.startsWith("image/")) files.push(f);
+                updateList();
+                render(0);
+            }
+            inp.addEventListener("change", () => {
+                add([...inp.files]);
+                inp.value = "";
+            });
+            drop.addEventListener("click", (e) => {
+                if (e.target !== inp) inp.click();
+            });
+            drop.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                drop.classList.add("over");
+            });
+            drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+            drop.addEventListener("drop", (e) => {
+                e.preventDefault();
+                drop.classList.remove("over");
+                add([...e.dataTransfer.files]);
+            });
+            list.addEventListener("click", (e) => {
+                const b = e.target.closest("[data-remove]");
+                if (b) {
+                    const i = +b.dataset.remove;
+                    cache.delete(files[i]);
+                    files.splice(i, 1);
+                    updateList();
+                    render(0);
+                }
+            });
+            ["scanMode", "contrast", "threshold", "autoDeskew"].forEach((id) =>
+                $(id).addEventListener("input", () => {
+                    $("contrastOut").value = $("contrast").value;
+                    $("thresholdOut").value = $("threshold").value;
+                    $("thresholdRow").hidden = $("scanMode").value !== "bw";
+                    render(0);
+                }),
+            );
+            $("scanDownload").addEventListener("click", async () => {
+                if (!files.length) return;
+                $("scanDownload").disabled = true;
+                try {
+                    const { PDFDocument } = PDFLib,
+                        out = await PDFDocument.create();
+                    for (let i = 0; i < files.length; i++) {
+                        status.textContent =
+                            "Procesando foto " + (i + 1) + " de " + files.length + "…";
+                        let src = cache.get(files[i]);
+                        if (!src) {
+                            src = await imageCanvas(files[i]);
+                            cache.set(files[i], src);
+                        }
+                        let c = processCanvas(src);
+                        if ($("autoDeskew").checked) c = deskew(c, skewAngle(c));
+                        const blob = await new Promise((r) =>
+                            c.toBlob(r, "image/jpeg", 0.9),
+                        ),
+                            img = await out.embedJpg(await blob.arrayBuffer()),
+                            paper = $("paper").value;
+                        let w, h;
+                        if (paper === "image") {
+                            w = (c.width * 72) / 150;
+                            h = (c.height * 72) / 150;
+                        } else {
+                            const a = paper === "a4" ? [595.28, 841.89] : [612, 792],
+                                land = c.width > c.height;
+                            w = land ? a[1] : a[0];
+                            h = land ? a[0] : a[1];
+                        }
+                        const pg = out.addPage([w, h]),
+                            m = paper === "image" ? 0 : 24,
+                            k = Math.min((w - 2 * m) / img.width, (h - 2 * m) / img.height),
+                            iw = img.width * k,
+                            ih = img.height * k;
+                        pg.drawImage(img, {
+                            x: (w - iw) / 2,
+                            y: (h - ih) / 2,
+                            width: iw,
+                            height: ih,
+                        });
+                        await new Promise((r) => setTimeout(r));
+                    }
+                    Matrix.saveBlob(
+                        new Blob([await out.save()], { type: "application/pdf" }),
+                        "documento-escaner.pdf",
+                    );
+                    status.textContent = "PDF escaneado descargado.";
+                } catch (e) {
+                    status.textContent = "No se pudo crear el PDF.";
+                } finally {
+                    $("scanDownload").disabled = !files.length;
+                }
+            });
+            $("thresholdRow").hidden = true;
+        })();
+    </script>
+</body>
+
+</html>
