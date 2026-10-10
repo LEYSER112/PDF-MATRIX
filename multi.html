@@ -83,6 +83,14 @@
 
   <!-- Espacio de trabajo -->
   <section id="workspace" hidden>
+    <div class="mobile-workspace-nav">
+      <div class="mobile-view-switch" role="tablist" aria-label="Vista del editor">
+        <button type="button" class="mobile-view-tab active" id="workTab" role="tab" aria-selected="true"><svg><use href="#i-file"/></svg>Espacio de trabajo</button>
+        <button type="button" class="mobile-view-tab" id="toolsTab" role="tab" aria-selected="false"><svg><use href="#i-expand"/></svg>Herramientas</button>
+      </div>
+      <button type="button" class="mobile-toolbar-toggle" id="mobileToolbarToggle" aria-expanded="false" aria-controls="toolbar"><svg><use href="#i-expand"/></svg><span>Mostrar barra de herramientas</span></button>
+    </div>
+    <button type="button" class="mobile-toolbar-quick-toggle" id="mobileToolbarQuickToggle" aria-label="Ocultar barra de herramientas" title="Ocultar barra de herramientas"><svg><use href="#i-close"/></svg></button>
     <div class="toolbar" id="toolbar">
       <div class="group">
         <span class="count none" id="count">0 seleccionadas</span>
@@ -240,7 +248,7 @@
   'use strict';
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   const $ = (id) => document.getElementById(id);
-  const el = Object.fromEntries('btnCut cutter cutBtn blankBtn pwOn pwVal pwShow hero drop fileInput fileAdd workspace grid empty count dlLabel fileInfo btnNew btnAll btnNone btnRotL btnRotR btnDup btnDel btnUndo btnRedo btnDownload btnDlMore dlMenu btnInsert insMenu rangeInput btnRange btnTheme toast busy busyText viewer viewerCanvas annotBox redactionBox vLabel vPrev vNext vRotL vRotR vSel vSelText vClose vScroll vZin vZout vFit zoomRange zIn zOut mergeView mergeSeg mergeList mergeHint mergeCancel mergeOk nameModal nameInput nameOk nameCancel askName opts optsSum cmp numOn numPos numFmt numStart wmOn wmText wmOp stOn stPreset stText stDate stPos cmpOn fnOn fnPrev fnMsg fnAngle fnNum fnMinus fnPlus fnApply fnReset btnTools stDateVal stToday cropOn cropPages cropAuto cropReset cropPrev cropNext cropPageLbl cropBox cropStage cropCanvas cropRect cropX cropY cropW cropH cropApply cropClear ocrRun ocrStatus ocrSearch ocrResults ocrText ocrCopy formOn formScan formStatus formFields sigCanvas sigClear sigPlace vHighlight vNote vText vRedact'.split(' ').map((k) => [k, $(k)]));
+  const el = Object.fromEntries('btnCut cutter cutBtn blankBtn pwOn pwVal pwShow hero drop fileInput fileAdd workspace grid empty count dlLabel fileInfo btnNew btnAll btnNone btnRotL btnRotR btnDup btnDel btnUndo btnRedo btnDownload btnDlMore dlMenu btnInsert insMenu rangeInput btnRange btnTheme toast busy busyText viewer viewerCanvas annotBox redactionBox vLabel vPrev vNext vRotL vRotR vSel vSelText vClose vScroll vZin vZout vFit zoomRange zIn zOut mergeView mergeSeg mergeList mergeHint mergeCancel mergeOk nameModal nameInput nameOk nameCancel askName opts optsSum cmp numOn numPos numFmt numStart wmOn wmText wmOp stOn stPreset stText stDate stPos cmpOn fnOn fnPrev fnMsg fnAngle fnNum fnMinus fnPlus fnApply fnReset btnTools workTab toolsTab mobileToolbarToggle mobileToolbarQuickToggle stDateVal stToday cropOn cropPages cropAuto cropReset cropPrev cropNext cropPageLbl cropBox cropStage cropCanvas cropRect cropX cropY cropW cropH cropApply cropClear ocrRun ocrStatus ocrSearch ocrResults ocrText ocrCopy formOn formScan formStatus formFields sigCanvas sigClear sigPlace vHighlight vNote vText vRedact'.split(' ').map((k) => [k, $(k)]));
   const MAX_DPR = 2, root = document.documentElement;
   const sources = new Map(), cards = new Map();
   let items = [], itemMap = new Map(), history = [], future = [];
@@ -1013,7 +1021,24 @@
   el.fnReset.addEventListener('click', () => applyFine(0));
   el.stDateVal.value = isoToday();
   el.stToday.addEventListener('click', () => (el.stDateVal.value = isoToday()));
-  el.btnTools.addEventListener('click', () => el.opts.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  const setMobileView = (view) => {
+    document.querySelector('.ws').classList.toggle('tools-open', view === 'tools');
+    el.workspace.classList.toggle('tools-view', view === 'tools');
+    el.workTab.classList.toggle('active', view !== 'tools'); el.toolsTab.classList.toggle('active', view === 'tools');
+    el.workTab.setAttribute('aria-selected', view !== 'tools'); el.toolsTab.setAttribute('aria-selected', view === 'tools');
+  };
+  el.workTab.addEventListener('click', () => setMobileView('work'));
+  el.toolsTab.addEventListener('click', () => setMobileView('tools'));
+  el.btnTools.addEventListener('click', () => setMobileView('tools'));
+  el.workspace.classList.toggle('toolbar-expanded', !matchMedia('(max-width: 640px)').matches);
+  const setToolbarExpanded = (expanded) => {
+    el.workspace.classList.toggle('toolbar-expanded', expanded);
+    el.mobileToolbarToggle.setAttribute('aria-expanded', String(expanded));
+    el.mobileToolbarToggle.querySelector('span').textContent = expanded ? 'Ocultar barra de herramientas' : 'Mostrar barra de herramientas';
+  };
+  setToolbarExpanded(el.workspace.classList.contains('toolbar-expanded'));
+  el.mobileToolbarToggle.addEventListener('click', () => setToolbarExpanded(!el.workspace.classList.contains('toolbar-expanded')));
+  el.mobileToolbarQuickToggle.addEventListener('click', () => setToolbarExpanded(false));
   updateOpts();
 
   /* ---------- Recortar páginas (área de recorte) ---------- */

@@ -411,19 +411,35 @@
   .viewer-scroll { position: relative; }
   .annotation-box { position: absolute; border: 2px solid rgba(196, 147, 0, .95); background: rgba(255, 220, 60, .3); pointer-events: none; }
   .redaction-box { position: absolute; border: 1px dashed #fff; background: rgba(0, 0, 0, .82); pointer-events: none; }
+  .mobile-workspace-nav, .mobile-view-switch, .mobile-toolbar-toggle, .mobile-toolbar-quick-toggle { display: none; }
   @media (max-width: 640px) {
-    #toolbar { position: fixed; top: auto; bottom: 0; left: 8px; right: 8px; width: auto; margin: 0; border-radius: 16px 16px 0 0; padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); z-index: 55; }
-    #workspace { padding-bottom: calc(170px + env(safe-area-inset-bottom, 0px)); }
-    #toolbar .menu { top: auto; bottom: calc(100% + 8px); max-width: calc(100vw - 20px); }
+    .mobile-workspace-nav { display: grid; position: sticky; top: 0; z-index: 20; gap: 7px; padding: 4px 0 8px; margin-bottom: 6px; background: var(--bg); }
+    .mobile-view-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 5px; border: 1px solid var(--line); border-radius: 15px; background: var(--panel); box-shadow: var(--shadow); }
+    .mobile-view-tab { display: flex; justify-content: center; align-items: center; gap: 8px; min-height: 44px; border: 0; border-radius: 11px; background: transparent; color: var(--muted); font: inherit; font-weight: 700; cursor: pointer; transition: color .2s, background .2s, transform .2s; }
+    .mobile-view-tab svg { width: 19px; height: 19px; }
+    .mobile-view-tab.active { background: var(--accent-soft); color: var(--accent); }
+    .mobile-view-tab:active { transform: scale(.97); }
+    .mobile-toolbar-toggle { display: flex; width: 100%; align-items: center; justify-content: center; gap: 8px; min-height: 40px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--muted); font: inherit; font-size: .86rem; font-weight: 700; }
+    .mobile-toolbar-toggle svg { width: 17px; height: 17px; }
+    #workspace.toolbar-expanded .mobile-toolbar-quick-toggle { display: grid; position: fixed; right: 14px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 58; width: 48px; height: 48px; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: var(--panel); color: var(--text); box-shadow: var(--shadow); cursor: pointer; }
+    .mobile-toolbar-quick-toggle svg { width: 22px; height: 22px; }
+    #workspace:not(.toolbar-expanded) #toolbar { display: none; }
+    .ws { display: block; position: relative; overflow: hidden; min-height: 55vh; }
+    .ws-main { width: 100%; transition: transform .28s cubic-bezier(.2,.75,.25,1), opacity .2s; will-change: transform; }
+    .side { position: absolute; inset: 0 0 auto; z-index: 2; width: 100%; max-height: calc(100dvh - 190px); overflow-y: auto; margin: 0; transform: translateX(105%); visibility: hidden; opacity: 0; pointer-events: none; transition: transform .28s cubic-bezier(.2,.75,.25,1), opacity .2s, visibility .28s; }
+    #workspace.tools-view .ws { height: 68dvh; min-height: 54dvh; }
+    #workspace.tools-view .ws-main { position: absolute; inset: 0; width: 100%; transform: translateX(-24%); opacity: .28; pointer-events: none; }
+    #workspace.tools-view .side { inset: 0; height: 100%; max-height: none; overflow-y: auto; transform: translateX(0); visibility: visible; opacity: 1; pointer-events: auto; }
+    .ws.tools-open .ws-main { transform: translateX(-24%); }
+    #btnTools { display: none; }
+    #toolbar .menu { max-width: calc(100vw - 20px); }
     #toolbar { gap: 6px; padding: 8px; }
     #toolbar .group { gap: 5px; }
     #toolbar .spacer { display: none; }
     #toolbar .count { padding: 0 9px; font-size: .8rem; }
     #toolbar .range input { width: 90px; }
     #toolbar .zoom input[type=range] { width: 64px; }
-    #toolbar { padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
   }
-
   /* ---- v8: bloques y tijera ---- */
   .blocks { display: grid; gap: 14px; }
   .block.multi { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding-bottom: 12px; }
