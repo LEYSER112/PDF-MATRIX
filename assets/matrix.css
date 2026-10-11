@@ -466,7 +466,11 @@
   .cut-btn svg { width: 18px; height: 18px; }
   .blocks.cutting .card { cursor: crosshair; }
   #btnCut.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-  @media (max-width: 640px) { .bgrid { gap: 12px; } .bname { flex-basis: 140px; } }
+  @media (max-width: 640px) {
+    .bgrid { gap: 12px; } .bname { flex-basis: 140px; }
+    .cutter .cut-btn { width: 42px; height: 42px; }
+    .cut-btns { left: -21px; gap: 8px; }
+  }
 
   /* ---- v9: contraste, separación, contraseña ---- */
   :root { color-scheme: dark; --gap: 30px; }

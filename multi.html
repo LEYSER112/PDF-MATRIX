@@ -452,12 +452,22 @@
     if (e.pointerType === 'touch' || dragIds) return;
     const t = cutTargetAt(e); if (t) showCutter(t); else { clearTimeout(cutHide); cutHide = setTimeout(hideCutter, 140); }
   });
-  el.grid.addEventListener('pointerleave', () => { clearTimeout(cutHide); cutHide = setTimeout(hideCutter, 220); });
+  el.grid.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'touch' && !matchMedia('(hover: none)').matches) return;
+    const t = cutTargetAt(e); if (!t) return;
+    e.preventDefault(); e.stopPropagation(); showCutter(t);
+  });
+  el.grid.addEventListener('pointerleave', () => { if (matchMedia('(hover: none)').matches) return; clearTimeout(cutHide); cutHide = setTimeout(hideCutter, 220); });
   el.cutter.addEventListener('pointerenter', () => clearTimeout(cutHide));
-  el.cutter.addEventListener('pointerleave', () => { cutHide = setTimeout(hideCutter, 140); });
+  el.cutter.addEventListener('pointerleave', () => { if (matchMedia('(hover: none)').matches) return; cutHide = setTimeout(hideCutter, 140); });
   el.blankBtn.addEventListener('click', () => { const i = items.findIndex((x) => x.id === cutCand); hideCutter(); if (i >= 0) insertBlankAt(i + 1); });
   el.cutBtn.addEventListener('click', () => { const i = items.findIndex((x) => x.id === cutCand); hideCutter(); if (i >= 0) applyCuts([i]); });
-  el.grid.addEventListener('click', (e) => { if (!cutMode) return; const t = cutTargetAt(e); if (!t) return; e.stopPropagation(); e.preventDefault(); hideCutter(); applyCuts([t.i]); }, true);
+  el.grid.addEventListener('click', (e) => {
+    if (!matchMedia('(hover: none)').matches) return;
+    const t = cutTargetAt(e); if (!t) return;
+    e.stopPropagation(); e.preventDefault(); showCutter(t);
+  }, true);
+  el.grid.addEventListener('click', (e) => { if (!cutMode || e.pointerType === 'touch' || matchMedia('(hover: none)').matches) return; const t = cutTargetAt(e); if (!t) return; e.stopPropagation(); e.preventDefault(); hideCutter(); applyCuts([t.i]); }, true);
   window.addEventListener('scroll', hideCutter, { passive: true });
 
   el.grid.addEventListener('click', (e) => {

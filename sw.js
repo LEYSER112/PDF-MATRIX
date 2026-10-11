@@ -1,4 +1,4 @@
-const VERSION = 'pdf-matrix-v6';
+const VERSION = 'pdf-matrix-v7';
 const SHELL = [
   './', './index.html', './multi.html', './unir.html', './comprimir.html', './proteger.html',
   './escaner.html', './convertir.html', './manifest.webmanifest', './assets/matrix.css',
