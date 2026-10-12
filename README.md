@@ -11,7 +11,3 @@ Aplicación web estática para trabajar con archivos PDF desde el navegador.
 - `src/assets/`: recursos adicionales de ejecución.
 - `manifest.webmanifest` y `sw.js`: instalación y funcionamiento sin conexión.
 - `index.html`: acceso de entrada para abrir la aplicación.
-
-## Publicación
-
-Publica el contenido de esta carpeta conservando la estructura. La app utiliza librerías externas por CDN y requiere servirse por HTTP/HTTPS para que el modo sin conexión y el service worker funcionen.
