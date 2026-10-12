@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="../../manifest.webmanifest">
+<meta name="theme-color" content="#0e1626" media="(prefers-color-scheme: dark)"><meta name="theme-color" content="#f2f5fa" media="(prefers-color-scheme: light)">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="PDF Matrix"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/svg+xml" href="../assets/icons/icon.svg"><link rel="icon" type="image/png" sizes="32x32" href="../assets/icons/favicon-32.png"><link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png">
+<title>Modo escáner · PDF Matrix</title><meta name="description" content="Mejora escaneos y fotos de documentos en tu navegador.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/matrix.css"></head><body>
+<header class="topbar">
+  <a class="brand" href="index.html" title="Volver al inicio"><div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div><h1>PDF Matrix</h1><p>Modo escáner</p></div></a>
+  <a class="btn ghost" href="index.html"><svg><use href="#i-chev-l"/></svg><span class="t">Inicio</span></a>
+  <button class="icon-btn" id="btnTheme" title="Cambiar tema" aria-label="Cambiar tema"><svg><use href="#i-theme"/></svg></button>
+</header>
+<main><div class="page wide">
+  <section class="panel">
+    <h2>Modo escáner</h2>
+    <p class="sub">Convierte escaneos y fotos de documentos en PDF limpios: fondo más claro, mejor contraste, blanco y negro y páginas derechas. Todo ocurre en tu navegador.</p>
+    <label class="drop" id="drop" tabindex="0"><div class="drop-icon"><svg><use href="#i-scan"/></svg></div><strong>Arrastra tus PDF o fotos aquí, o haz clic para elegirlos</strong><span>PDF, JPG, PNG, WebP y otros formatos que tu navegador abra. Puedes mezclar varios.</span><input type="file" id="fileInput" accept="application/pdf,.pdf,image/*" multiple hidden></label>
+  </section>
+  <section class="panel" id="work" hidden>
+    <div class="og">
+      <label>Mejora<select id="mode"><option value="color">Color mejorado</option><option value="gray">Escala de grises</option><option value="bw">Blanco y negro (documento)</option><option value="none">Sin mejora (solo enderezar)</option></select></label>
+      <label>Resolución<select id="dpi"><option value="150">150 ppp (liviano)</option><option value="200" selected>200 ppp (recomendado)</option><option value="300">300 ppp (máxima calidad)</option></select></label>
+      <label>Calidad de imagen<select id="qual"><option value="0.92">Alta</option><option value="0.8" selected>Media</option><option value="0.6">Baja (más liviano)</option></select></label>
+      <label>Nombre del archivo<input type="text" id="outName" value="escaneo" maxlength="120" autocomplete="off"></label>
+    </div>
+    <div class="row">
+      <label class="inl"><input type="checkbox" id="straight"> Enderezar automáticamente</label>
+      <label class="inl"><input type="checkbox" id="cmp"> Ver original (comparar)</label>
+      <button class="btn sm" id="selAll">Marcar todas</button><button class="btn sm" id="selNone">Quitar todas</button>
+      <span class="sub" id="count" style="margin:0 0 0 auto"></span>
+    </div>
+    <div class="scroll tall"><div class="sgrid" id="grid"></div></div>
+    <p class="sub" style="margin:10px 0 0">Toca una página para incluirla o dejarla fuera. Con el botón ⟳ la giras 90°.</p>
+    <div class="actions" style="margin-top:12px"><button class="btn primary" id="btnGo"><svg><use href="#i-download"/></svg><span id="goT">Crear PDF</span></button></div>
+  </section>
+</div></main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="../assets/js/matrix.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  Matrix.initTheme($('btnTheme'));
+  const THUMB = 480, icon = (id) => `<svg><use href="#${id}"/></svg>`;
+  let pages = [], seq = 0, busy = false, tok = 0;
+  const isImg = (f) => /^image\//.test(f.type) || /\.(jpe?g|png|webp|gif|bmp|avif)$/i.test(f.name);
+  const cv = (w, h) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); const x = c.getContext('2d', { willReadFrequently: true }); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); return c; };
+  const opts = () => ({ mode: $('mode').value, straight: $('straight').checked });
+
+  // Dibuja la página (ya girada) en un lienzo. t = { side } para miniaturas o { dpi } para exportar. f = puntos por píxel.
+  async function drawBase(p, t) {
+    if (p.kind === 'pdf') {
+      const pg = await p.doc.getPage(p.n), rot = (pg.rotate + p.rot) % 360, v1 = pg.getViewport({ scale: 1, rotation: rot });
+      const sc = Math.min(t.dpi ? t.dpi / 72 : t.side / Math.max(v1.width, v1.height), 4000 / Math.max(v1.width, v1.height)), vp = pg.getViewport({ scale: sc, rotation: rot }), c = cv(vp.width, vp.height);
+      await pg.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise; return { c, f: 1 / sc };
+    }
+    const sw = p.rot % 180 !== 0, W0 = sw ? p.bmp.height : p.bmp.width, H0 = sw ? p.bmp.width : p.bmp.height;
+    const k = Math.min(t.side ? t.side / Math.max(W0, H0) : 1, 3200 / Math.max(W0, H0)), c = cv(W0 * k, H0 * k), x = c.getContext('2d');
+    x.save(); x.translate(c.width / 2, c.height / 2); x.rotate((p.rot * Math.PI) / 180); x.drawImage(p.bmp, (-p.bmp.width * k) / 2, (-p.bmp.height * k) / 2, p.bmp.width * k, p.bmp.height * k); x.restore();
+    return { c, f: 0.48 / k };
+  }
+  function straighten(c, a) { if (!a) return c; const d = cv(c.width, c.height), x = d.getContext('2d'); x.translate(d.width / 2, d.height / 2); x.rotate((a * Math.PI) / 180); x.drawImage(c, -c.width / 2, -c.height / 2); return d; }
+  function processed(p, c, st) {
+    let out = c;
+    if (st.straight) { if (p.angle === undefined) p.angle = Matrix.skewAngle(c); out = straighten(c, p.angle); }
+    if (st.mode !== 'none') { if (out === c) { out = cv(c.width, c.height); out.getContext('2d').drawImage(c, 0, 0); } Matrix.scanFilter(out, st.mode); }
+    return out;
+  }
+
+  /* ---------- Carga ---------- */
+  async function addFiles(list) {
+    const files = [...list], bad = []; busy = true;
+    for (const f of files) {
+      try {
+        if (Matrix.isPdf(f)) {
+          let bytes = new Uint8Array(await f.arrayBuffer()); bytes = await Matrix.unlock(bytes, f.name); if (!bytes) continue;
+          const doc = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
+          for (let n = 1; n <= doc.numPages; n++) pages.push({ id: ++seq, kind: 'pdf', doc, n, name: f.name, rot: 0, on: true });
+        } else if (isImg(f)) { const bmp = await createImageBitmap(f); pages.push({ id: ++seq, kind: 'img', bmp, n: 1, name: f.name, rot: 0, on: true }); }
+        else bad.push(f.name);
+      } catch (e) { bad.push(f.name); }
+    }
+    busy = false;
+    if (bad.length) Matrix.toast(`No se pudo abrir: ${bad.join(', ')}. Si es HEIC o TIFF, conviértelo antes a JPG o PNG.`, true);
+    build();
+  }
+  function build() {
+    $('work').hidden = !pages.length;
+    $('grid').innerHTML = pages.map((p, i) => `<div class="scard ${p.on ? 'on' : ''}" data-id="${p.id}"><span class="sc-check">${icon('i-check')}</span><div class="sc-th"></div><div class="sc-meta"><span title="${Matrix.esc(p.name)}">${i + 1}</span><button class="bbtn" data-a="rot" title="Girar 90°" aria-label="Girar 90°">${icon('i-rot-r')}</button></div></div>`).join('');
+    pages.forEach((p) => { p.el = $('grid').querySelector(`[data-id="${p.id}"] .sc-th`); });
+    updateCount(); paintThumbs();
+  }
+  function updateCount() { const n = pages.filter((p) => p.on).length; $('count').textContent = `${n} de ${pages.length} ${pages.length === 1 ? 'página' : 'páginas'}`; $('btnGo').disabled = busy || !n; }
+  async function paintThumbs() {
+    const t = ++tok, st = opts();
+    for (const p of pages) {
+      if (t !== tok) return;
+      try {
+        if (!p.base) p.base = (await drawBase(p, { side: THUMB })).c;
+        if (t !== tok) return;
+        p.el.replaceChildren($('cmp').checked ? p.base : processed(p, p.base, st));
+      } catch (e) { console.error(e); }
+      await new Promise((r) => setTimeout(r));
+    }
+  }
+  ['mode', 'straight', 'cmp'].forEach((id) => $(id).addEventListener('change', paintThumbs));
+  $('grid').addEventListener('click', (e) => {
+    const card = e.target.closest('.scard'); if (!card) return; const p = pages.find((x) => x.id === +card.dataset.id);
+    if (e.target.closest('[data-a="rot"]')) { p.rot = (p.rot + 90) % 360; p.base = null; p.angle = undefined; paintThumbs(); return; }
+    p.on = !p.on; card.classList.toggle('on', p.on); updateCount();
+  });
+  $('selAll').onclick = () => { pages.forEach((p) => (p.on = true)); build(); };
+  $('selNone').onclick = () => { pages.forEach((p) => (p.on = false)); $('grid').querySelectorAll('.scard').forEach((c) => c.classList.remove('on')); updateCount(); };
+
+  /* ---------- Crear PDF ---------- */
+  $('btnGo').onclick = async () => {
+    const list = pages.filter((p) => p.on); if (!list.length || busy) return;
+    busy = true; $('btnGo').disabled = true;
+    const st = opts(), dpi = +$('dpi').value, q = +$('qual').value, bw = st.mode === 'bw'; let n = 0;
+    try {
+      const doc = await PDFLib.PDFDocument.create();
+      for (const p of list) {
+        $('goT').textContent = `Procesando ${++n} de ${list.length}…`;
+        const { c, f } = await drawBase(p, { dpi }), o = processed(p, c, st);
+        const blob = await new Promise((r) => o.toBlob(r, bw ? 'image/png' : 'image/jpeg', q)), buf = await blob.arrayBuffer();
+        const img = bw ? await doc.embedPng(buf) : await doc.embedJpg(buf), w = o.width * f, h = o.height * f;
+        doc.addPage([w, h]).drawImage(img, { x: 0, y: 0, width: w, height: h });
+        await new Promise((r) => setTimeout(r));
+      }
+      const name = $('outName').value.replace(/\.pdf$/i, '').replace(/[\\/:*?"<>|]+/g, '').trim() || 'escaneo';
+      Matrix.saveBlob(new Blob([await doc.save()], { type: 'application/pdf' }), name + '.pdf'); Matrix.toast('PDF creado y descargado.');
+    } catch (e) { console.error(e); Matrix.toast('No se pudo crear el PDF.', true); }
+    finally { busy = false; $('goT').textContent = 'Crear PDF'; updateCount(); }
+  };
+
+  /* ---------- Entrada de archivos ---------- */
+  $('fileInput').onchange = (e) => { addFiles(e.target.files); e.target.value = ''; };
+  $('drop').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('fileInput').click(); } });
+  const hasFiles = (e) => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+  window.addEventListener('dragover', (e) => { if (hasFiles(e)) { e.preventDefault(); $('drop').classList.add('over'); } });
+  window.addEventListener('dragleave', (e) => { if (!e.relatedTarget) $('drop').classList.remove('over'); });
+  window.addEventListener('drop', (e) => { if (hasFiles(e)) { e.preventDefault(); $('drop').classList.remove('over'); addFiles(e.dataTransfer.files); } });
+})();
+</script>
+</body></html>

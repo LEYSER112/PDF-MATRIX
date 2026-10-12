@@ -1,0 +1,245 @@
+window.Matrix = (() => {
+  const sprite = `
+    <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></symbol>
+    <symbol id="i-rot-r" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></symbol>
+    <symbol id="i-rot-l" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h5v5"/><path d="m20 4-6 6"/><path d="M9 20H4v-5"/><path d="m4 20 6-6"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+    <symbol id="i-theme" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-chev-l" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></symbol>
+    <symbol id="i-chev-r" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></symbol>
+    <symbol id="i-zoom" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12"/><path d="M9 7V4h6v3"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></symbol>
+  <symbol id="i-compress" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6"/><path d="m10 14-7 7"/><path d="M20 10h-6V4"/><path d="m14 10 7-7"/></symbol>
+<symbol id="i-merge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><path d="M11 8h4a2 2 0 0 1 2 2v1"/></symbol>
+<symbol id="i-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></symbol>
+<symbol id="i-install" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 8v6"/><path d="m9.5 12 2.5 2.5 2.5-2.5"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-4-4L5 21"/></symbol>
+<symbol id="i-tools" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>`;
+  if (document.body && !document.getElementById('i-check')) document.body.insertAdjacentHTML('afterbegin', `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>${sprite}</defs></svg>`);
+  const esc = (t) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const fmtSize = (n) => (n < 1048576 ? Math.max(1, Math.round(n / 1024)) + ' KB' : (n / 1048576).toFixed(1) + ' MB');
+  const isPdf = (f) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
+  let tt;
+  function toast(msg, err = false) {
+    let t = document.getElementById('toast');
+    if (!t) { t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }
+    t.textContent = msg; t.classList.toggle('error', err); t.classList.add('show');
+    clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 3200);
+  }
+  function parseRange(text, max) {
+    const out = new Set();
+    for (const part of text.split(/[,;\s]+/).filter(Boolean)) {
+      const m = part.match(/^(\d+)(?:-(\d+))?$/); if (!m) return null;
+      let a = +m[1], b = m[2] ? +m[2] : a; if (a > b) [a, b] = [b, a];
+      if (a < 1 || b > max) return null;
+      for (let k = a; k <= b; k++) out.add(k - 1);
+    }
+    return out.size ? [...out] : null;
+  }
+  function saveBlob(blob, name) {
+    const u = URL.createObjectURL(blob), a = Object.assign(document.createElement('a'), { href: u, download: name });
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000);
+  }
+  function initTheme(btn) {
+    const root = document.documentElement;
+    try { const t = localStorage.getItem('pdfmatriz-theme'); if (t) root.dataset.theme = t; } catch (e) {}
+    if (btn) btn.addEventListener('click', () => {
+      const dark = root.dataset.theme ? root.dataset.theme === 'dark' : !matchMedia('(prefers-color-scheme: light)').matches;
+      root.dataset.theme = dark ? 'light' : 'dark';
+      try { localStorage.setItem('pdfmatriz-theme', root.dataset.theme); } catch (e) {}
+    });
+  }
+
+  /* ---- Compresión real: reduce las imágenes JPEG internas y conserva el texto ---- */
+  const LEVELS = { media: { max: 1600, q: 0.7 }, alta: { max: 1100, q: 0.5 } };
+  async function shrinkImages(doc, level) {
+    const { PDFName, PDFNumber, PDFRawStream } = PDFLib, cfg = LEVELS[level], N = (k) => PDFName.of(k); let changed = 0;
+    for (const [ref, obj] of doc.context.enumerateIndirectObjects()) {
+      if (!(obj instanceof PDFRawStream)) continue;
+      const d = obj.dict;
+      if (d.get(N('Subtype')) !== N('Image') || d.get(N('Filter')) !== N('DCTDecode')) continue;
+      if (d.has(N('Decode')) || d.has(N('Mask')) || d.has(N('ImageMask'))) continue;
+      try {
+        const old = obj.contents, bmp = await createImageBitmap(new Blob([old], { type: 'image/jpeg' }));
+        const k = Math.min(1, cfg.max / Math.max(bmp.width, bmp.height)), w = Math.max(1, Math.round(bmp.width * k)), h = Math.max(1, Math.round(bmp.height * k));
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); ctx.drawImage(bmp, 0, 0, w, h);
+        if (bmp.close) bmp.close();
+        const blob = await new Promise((r) => c.toBlob(r, 'image/jpeg', cfg.q));
+        if (!blob || blob.size >= old.length * 0.95) continue;
+        const nu = new Uint8Array(await blob.arrayBuffer());
+        d.set(N('Width'), PDFNumber.of(w)); d.set(N('Height'), PDFNumber.of(h)); d.set(N('ColorSpace'), N('DeviceRGB')); d.set(N('BitsPerComponent'), PDFNumber.of(8)); d.delete(N('DecodeParms'));
+        doc.context.assign(ref, PDFRawStream.of(d, nu)); changed++;
+      } catch (e) { /* imagen no compatible: se deja igual */ }
+    }
+    return changed;
+  }
+  async function rasterizeBytes(bytes, { dpi, q }, onProgress) {
+    const { PDFDocument } = PDFLib, doc = await pdfjsLib.getDocument({ data: bytes.slice() }).promise, out = await PDFDocument.create();
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i), v1 = page.getViewport({ scale: 1 }), sc = Math.min(dpi / 72, 3500 / Math.max(v1.width, v1.height)), vp = page.getViewport({ scale: sc });
+      const c = document.createElement('canvas'); c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+      const ctx = c.getContext('2d', { alpha: false }); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      const blob = await new Promise((r) => c.toBlob(r, 'image/jpeg', q)), img = await out.embedJpg(await blob.arrayBuffer());
+      out.addPage([v1.width, v1.height]).drawImage(img, { x: 0, y: 0, width: v1.width, height: v1.height });
+      if (onProgress) onProgress(i, doc.numPages);
+      await new Promise((r) => setTimeout(r));
+    }
+    doc.destroy(); return out.save();
+  }
+  // Devuelve siempre el menor entre el original y el resultado: nunca empeora el peso.
+  async function compress(bytes, level, onProgress) {
+    let best = bytes;
+    if (level === 'max') { const r = await rasterizeBytes(bytes, { dpi: 100, q: 0.55 }, onProgress); if (r.length < best.length) best = r; }
+    else {
+      const doc = await PDFLib.PDFDocument.load(bytes, { ignoreEncryption: true });
+      await shrinkImages(doc, level); const r = await doc.save(); if (r.length < best.length) best = r;
+    }
+    return { bytes: best, before: bytes.length, after: best.length };
+  }
+  /* ---- Contraseñas (QPDF en WebAssembly, local en el navegador) ---- */
+  let qpdfP = null;
+  const loadQpdf = () => qpdfP || (qpdfP = new Promise((res, rej) => {
+    if (window.__qpdf) return res(window.__qpdf);
+    const s = document.createElement('script'); s.src = 'assets/qpdf.js';
+    s.onload = () => { window.__qpdf = window.Module; res(window.__qpdf); };
+    s.onerror = () => { qpdfP = null; rej(new Error('qpdf')); }; document.head.appendChild(s);
+  }));
+  async function qpdfRun(args, bytes) {
+    const make = await loadQpdf(), log = [];
+    const q = await make({ locateFile: () => new URL('assets/qpdf.wasm', document.baseURI).href, noInitialRun: true, print: (t) => log.push(t), printErr: (t) => log.push(t) });
+    q.FS.writeFile('/in.pdf', bytes); let code = 0;
+    try { code = q.callMain(args); } catch (e) { code = e && typeof e.status === 'number' ? e.status : 2; }
+    let out = null; try { out = q.FS.readFile('/out.pdf'); } catch (e) {}
+    return { code, out, log: log.join(' ') };
+  }
+  const latin = new TextDecoder('latin1');
+  function looksEncrypted(bytes) {
+    const n = bytes.length, a = latin.decode(bytes.subarray(0, Math.min(n, 4096))), b = n > 4096 ? latin.decode(bytes.subarray(n - 4096)) : '';
+    return /\/Encrypt\b/.test(a) || /\/Encrypt\b/.test(b);
+  }
+  async function decrypt(bytes, pw) {
+    const r = await qpdfRun(['--password=' + pw, '--decrypt', '/in.pdf', '/out.pdf'], bytes);
+    if (r.out && r.code !== 2) return { ok: true, bytes: r.out };
+    return { ok: false, reason: r.code === 2 || /password/i.test(r.log) ? 'password' : 'error' };
+  }
+  async function encrypt(bytes, pw) {
+    const r = await qpdfRun(['--encrypt', pw, pw, '256', '--', '/in.pdf', '/out.pdf'], bytes);
+    if (!r.out || r.code === 2) throw new Error('No se pudo proteger el PDF');
+    return r.out;
+  }
+  function askPassword(name, wrong) {
+    return new Promise((resolve) => {
+      const m = document.createElement('div'); m.className = 'modal open'; m.style.zIndex = 120; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true');
+      m.innerHTML = `<div class="sheet"><h3>Documento protegido</h3><p class="sub">«${esc(name)}» está protegido con contraseña. Escríbela para abrirlo.</p><input class="name" type="password" id="mxPw" autocomplete="off" aria-label="Contraseña" style="margin-bottom:8px"><label style="display:flex;gap:8px;align-items:center;color:var(--muted);font-size:.85rem;margin-bottom:12px"><input type="checkbox" id="mxShow"> Mostrar contraseña</label><p class="sub error" ${wrong ? '' : 'hidden'}>Contraseña incorrecta. Inténtalo de nuevo.</p><div class="actions"><button class="btn ghost" id="mxNo">Cancelar</button><button class="btn primary" id="mxOk">Abrir</button></div></div>`;
+      document.body.appendChild(m);
+      const inp = m.querySelector('#mxPw'), done = (v) => { m.remove(); resolve(v); };
+      m.querySelector('#mxShow').onchange = (e) => { inp.type = e.target.checked ? 'text' : 'password'; };
+      m.querySelector('#mxNo').onclick = () => done(null);
+      m.querySelector('#mxOk').onclick = () => done(inp.value);
+      inp.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); done(inp.value); } else if (e.key === 'Escape') done(null); };
+      setTimeout(() => inp.focus(), 30);
+    });
+  }
+  // Devuelve los bytes sin contraseña (pide la clave si hace falta) o null si se cancela.
+  async function unlock(bytes, name) {
+    if (!looksEncrypted(bytes)) return bytes;
+    let pw = '', wrong = false;
+    for (;;) {
+      let r; try { r = await decrypt(bytes, pw); } catch (e) { toast('No se pudo cargar el módulo de contraseñas. Abre la página desde GitHub Pages (con internet no hace falta nada más).', true); return null; }
+      if (r.ok) { if (pw) toast('Documento desbloqueado. Al descargar saldrá sin contraseña.'); return r.bytes; }
+      if (r.reason !== 'password') { toast(`No se pudo abrir «${name}».`, true); return null; }
+      pw = await askPassword(name, wrong); if (pw === null) return null; wrong = true;
+    }
+  }
+  /* ---- Modo escáner: aclara el fondo, sube el contraste y (opcional) blanco y negro ---- */
+  function scanFilter(c, mode) {
+    const w = c.width, h = c.height, ctx = c.getContext('2d'), img = ctx.getImageData(0, 0, w, h), d = img.data, n = w * h;
+    const lum = new Uint8ClampedArray(n), hist = new Uint32Array(256);
+    for (let i = 0, p = 0; i < n; i++, p += 4) { const v = (d[p] * 77 + d[p + 1] * 150 + d[p + 2] * 29) >> 8; lum[i] = v; hist[v]++; }
+    const pct = (q) => { let s = 0; for (let v = 0; v < 256; v++) { s += hist[v]; if (s >= n * q) return v; } return 255; };
+    let lo = pct(0.02), hi = pct(0.85); const mid = pct(0.5); if (mid > 150) hi = Math.max(mid, hi - 25);
+    if (hi - lo < 40) lo = Math.max(0, hi - 40);
+    const k = 255 / Math.max(1, hi - lo), lut = new Uint8ClampedArray(256); for (let v = 0; v < 256; v++) lut[v] = (v - lo) * k;
+    if (mode === 'bw') {
+      const W1 = w + 1, I = new Uint32Array(W1 * (h + 1));
+      for (let y = 0; y < h; y++) { let row = 0; for (let x = 0; x < w; x++) { row += lum[y * w + x]; I[(y + 1) * W1 + x + 1] = I[y * W1 + x + 1] + row; } }
+      const r = Math.max(8, Math.round(Math.min(w, h) / 16));
+      for (let y = 0; y < h; y++) {
+        const y0 = Math.max(0, y - r), y1 = Math.min(h, y + r + 1);
+        for (let x = 0; x < w; x++) {
+          const x0 = Math.max(0, x - r), x1 = Math.min(w, x + r + 1), cnt = (x1 - x0) * (y1 - y0);
+          const sum = I[y1 * W1 + x1] - I[y0 * W1 + x1] - I[y1 * W1 + x0] + I[y0 * W1 + x0], v = lum[y * w + x] * cnt < sum * 0.86 ? 0 : 255, p = (y * w + x) * 4;
+          d[p] = d[p + 1] = d[p + 2] = v;
+        }
+      }
+    } else if (mode === 'gray') {
+      for (let i = 0, p = 0; i < n; i++, p += 4) d[p] = d[p + 1] = d[p + 2] = lut[lum[i]];
+    } else {
+      for (let p = 0; p < d.length; p += 4) { d[p] = lut[d[p]]; d[p + 1] = lut[d[p + 1]]; d[p + 2] = lut[d[p + 2]]; }
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  // Ángulo (grados, + = horario) que hay que girar la página para dejar las líneas de texto horizontales.
+  function skewAngle(c) {
+    const k = 480 / Math.max(c.width, c.height), w = Math.max(40, Math.round(c.width * k)), h = Math.max(40, Math.round(c.height * k));
+    const s = document.createElement('canvas'); s.width = w; s.height = h;
+    const sx = s.getContext('2d'); sx.fillStyle = '#fff'; sx.fillRect(0, 0, w, h); sx.drawImage(c, 0, 0, w, h);
+    const g = sx.getImageData(0, 0, w, h).data, lum = new Uint8Array(w * h); let sum = 0;
+    for (let i = 0, p = 0; i < w * h; i++, p += 4) { lum[i] = (g[p] * 77 + g[p + 1] * 150 + g[p + 2] * 29) >> 8; sum += lum[i]; }
+    const thr = (sum / (w * h)) * 0.72, xs = [], ys = [];
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (lum[y * w + x] < thr) { xs.push(x - w / 2); ys.push(y - h / 2); }
+    if (xs.length < 200) return 0;
+    const off = Math.ceil(Math.hypot(w, h) / 2) + 2, rows = new Float64Array(off * 2 + 1);
+    const score = (deg) => { rows.fill(0); const t = (deg * Math.PI) / 180, sn = Math.sin(t), cs = Math.cos(t); for (let i = 0; i < xs.length; i++) rows[Math.round(xs[i] * sn + ys[i] * cs) + off]++; let q = 0; for (let i = 0; i < rows.length; i++) q += rows[i] * rows[i]; return q; };
+    let best = 0, bs = -1;
+    for (let a = -15; a <= 15; a += 0.5) { const v = score(a); if (v > bs) { bs = v; best = a; } }
+    for (let a = best - 0.5; a <= best + 0.5; a += 0.1) { const v = score(a); if (v > bs) { bs = v; best = a; } }
+    return Math.abs(best) < 0.2 || bs < score(0) * 1.01 ? 0 : Math.round(best * 10) / 10;
+  }
+
+  /* ---- PWA: instalación y funcionamiento sin conexión ---- */
+  function initPwa() {
+    try {
+      if (typeof navigator === 'undefined' || !document.querySelector) return;
+      const standalone = (typeof matchMedia === 'function' && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+      if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+        let had = !!navigator.serviceWorker.controller;
+        navigator.serviceWorker.addEventListener('controllerchange', () => { if (had) toast('PDF Matrix se actualizó. Recarga la página para usar la nueva versión.'); had = true; });
+      }
+      const box = document.getElementById('installBox'), hb = document.getElementById('btnInstallHome'), top = document.querySelector('.topbar'), theme = document.getElementById('btnTheme');
+      let deferred = null, ib = null;
+      if (top && theme && !standalone) {
+        ib = document.createElement('button'); ib.className = 'icon-btn'; ib.hidden = true; ib.title = 'Instalar app'; ib.setAttribute('aria-label', 'Instalar app');
+        ib.innerHTML = '<svg><use href="#i-install"/></svg>'; top.insertBefore(ib, theme);
+      }
+      const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const refresh = () => {
+        const can = !!deferred && !standalone;
+        if (ib) ib.hidden = !can; if (hb) hb.hidden = !can;
+        if (box) { box.hidden = standalone || !(can || ios); const t = document.getElementById('installText'); if (t && ios && !can) t.textContent = 'En iPhone o iPad: toca el botón Compartir y elige «Añadir a pantalla de inicio».'; }
+      };
+      const ask = async () => { if (!deferred) return; deferred.prompt(); try { await deferred.userChoice; } catch (e) {} deferred = null; refresh(); };
+      if (ib) ib.addEventListener('click', ask); if (hb) hb.addEventListener('click', ask);
+      window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferred = e; refresh(); });
+      window.addEventListener('appinstalled', () => { deferred = null; refresh(); toast('PDF Matrix quedó instalada.'); });
+      window.addEventListener('offline', () => toast('Sin conexión: las herramientas siguen funcionando. El OCR necesita internet la primera vez.'));
+      window.addEventListener('online', () => toast('Conexión restablecida.'));
+      refresh();
+    } catch (e) { /* la app funciona igual sin esto */ }
+  }
+  initPwa();
+  return { esc, fmtSize, isPdf, toast, parseRange, saveBlob, initTheme, shrinkImages, compress, looksEncrypted, decrypt, encrypt, unlock, scanFilter, skewAngle };
+})();
